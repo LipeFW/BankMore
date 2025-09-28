@@ -1,12 +1,11 @@
 # Acesse https://aka.ms/customizecontainer para saber como personalizar seu contêiner de depuração e como o Visual Studio usa este Dockerfile para criar suas imagens para uma depuração mais rápida.
-
 # Esta fase é usada durante a execução no VS no modo rápido (Padrão para a configuração de Depuração)
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
+ENV ASPNETCORE_URLS=http://+:80
 
 # Esta fase é usada para compilar o projeto de serviço
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
@@ -17,6 +16,13 @@ RUN dotnet restore "./BankMore.Account/BankMore.Account.Api/BankMore.Account.Api
 COPY . .
 WORKDIR "/src/BankMore.Account/BankMore.Account.Api"
 RUN dotnet build "./BankMore.Account.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+RUN mkdir -p /app/data
+RUN chmod 777 /app/data
+
+VOLUME ["/app/data"]
+
+ENV SQLITE_DB_PATH=/app/data/app.db
 
 # Esta fase é usada para publicar o projeto de serviço a ser copiado para a fase final
 FROM build AS publish
