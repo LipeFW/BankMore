@@ -4,5 +4,6 @@
     {
         Task<Entities.ContaCorrente> GetByCpf(string cpf);
         Task Add(Entities.ContaCorrente account);
+        Task<Entities.ContaCorrente> GetByOrAccountNumberCpf(string cpfOrAccontNumber);
     }
 }

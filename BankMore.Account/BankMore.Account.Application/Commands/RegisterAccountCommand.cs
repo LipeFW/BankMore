@@ -5,7 +5,7 @@ namespace BankMore.Account.Application.Commands
     /// <summary>
     /// Comando para registrar uma nova conta corrente.
     /// </summary>
-    public class RegisterAccountCommand : IRequest<Guid>
+    public class RegisterAccountCommand : IRequest<string>
     {
         public string Name { get; set; }
         public string Email { get; set; }

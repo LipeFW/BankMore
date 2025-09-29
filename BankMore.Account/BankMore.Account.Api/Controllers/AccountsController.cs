@@ -2,6 +2,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using BankMore.Account.Application.Commands;
+using Microsoft.AspNetCore.Authorization;
+using BankMore.Account.Domain.Exceptions;
 
 namespace BankMore.Account.Api.Controllers
 {
@@ -15,15 +17,34 @@ namespace BankMore.Account.Api.Controllers
             _mediator = mediator;
         }
 
-        [HttpPost("register")]
+        [AllowAnonymous]
+        [HttpPost]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            if (string.IsNullOrEmpty(dto.Cpf)) 
-                return BadRequest(new { message = "CPF inválido", errorType = "INVALID_DOCUMENT" });
+            try
+            {
+                var result = await _mediator.Send(new RegisterAccountCommand(dto.Cpf, dto.Senha));
 
-            var numero = await _mediator.Send(new RegisterAccountCommand(dto.Cpf, dto.Senha));
+                return Ok(new { numeroConta = result });
+            }
+            catch (InvalidDocumentException ex)
+            {
+                return BadRequest(new { message = ex.Message, errorType = "INVALID_DOCUMENT" });
+            }
+        }
 
-            return Created(string.Empty, new { numeroConta = numero });
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        {
+            try
+            {
+                var result = await _mediator.Send(new LoginAccountCommand(dto.Cpf, dto.Senha));
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                return Unauthorized(new { message = "Houve um problema na tentativa de login.", type = "USER_UNAUTHORIZED" });
+            }
         }
     }
 }

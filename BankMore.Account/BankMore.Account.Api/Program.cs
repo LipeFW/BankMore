@@ -1,6 +1,7 @@
 
 using BankMore.Account.Api.Configuration;
 using BankMore.Account.Application.Commands;
+using BankMore.Account.Application.Services;
 using BankMore.Account.Domain.Interfaces;
 using BankMore.Account.Infrastructure.Context;
 using BankMore.Account.Infrastructure.Data;
@@ -28,14 +29,15 @@ namespace BankMore.Account.Api
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            SqlMapper.AddTypeHandler(new GuidTypeHandler());
+
+            builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+            builder.Services.AddScoped<ITokenService, TokenService>();
+
             builder.Services.AddMediatR(cfg =>
             {
                 cfg.RegisterServicesFromAssembly(typeof(RegisterAccountCommand).Assembly);
             });
-
-            SqlMapper.AddTypeHandler(new GuidTypeHandler());
-
-            builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 
             var dbPath = Environment.GetEnvironmentVariable("SQLITE_DB_PATH")
                          ?? Path.Combine(AppContext.BaseDirectory, "data", "app.db");
@@ -48,7 +50,7 @@ namespace BankMore.Account.Api
 
             builder.Services.AddScoped<IDbConnection>(sp =>
             {
-                var context = new SQLiteContext("Data Source=/app/data/app.db");
+                var context = new SQLiteContext($"Data Source={dbPath}");
                 return context.CreateConnection();
             });
 
@@ -56,7 +58,7 @@ namespace BankMore.Account.Api
             var jwtSettings = builder.Configuration.GetSection("Jwt");
             builder.Services.Configure<JwtConfiguration>(jwtSettings);
 
-            var key = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
 
             builder.Services.AddAuthentication(options =>
             {
@@ -90,8 +92,8 @@ namespace BankMore.Account.Api
             // Configure the HTTP request pipeline.
             //if (app.Environment.IsDevelopment())
             //{
-            app.UseSwagger(); 
-                app.UseSwaggerUI();
+            app.UseSwagger();
+            app.UseSwaggerUI();
             //}
 
             app.UseHttpsRedirection();
@@ -101,7 +103,7 @@ namespace BankMore.Account.Api
 
             app.MapControllers();
 
-            app.Urls.Add("http://0.0.0.0:80");
+            //app.Urls.Add("http://0.0.0.0:80");
             app.MapGet("/", () => "API rodando!");
 
             app.Run();

@@ -1,11 +1,13 @@
 ﻿using BankMore.Account.Application.Commands;
+using BankMore.Account.Domain.Exceptions;
 using BankMore.Account.Domain.Interfaces;
+using BankMore.Account.Domain.Utils;
 using MediatR;
 using System.Text;
 
 namespace BankMore.Account.Application.Handlers
 {
-    public class RegisterAccountHandler : IRequestHandler<RegisterAccountCommand, Guid>
+    public class RegisterAccountHandler : IRequestHandler<RegisterAccountCommand, string>
     {
         private readonly IAccountRepository _accountRepository;
 
@@ -14,10 +16,10 @@ namespace BankMore.Account.Application.Handlers
             _accountRepository = accountRepository;
         }
 
-        public async Task<Guid> Handle(RegisterAccountCommand request, CancellationToken cancellationToken)
+        public async Task<string> Handle(RegisterAccountCommand request, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(request.Cpf) || request.Cpf.Length != 11)
-                throw new ArgumentException("CPF inválido");
+            if (!CpfUtils.IsValid(request.Cpf))
+                throw new InvalidDocumentException("CPF inválido.");
 
             var existingAccount = await _accountRepository.GetByCpf(request.Cpf);
 
@@ -29,7 +31,7 @@ namespace BankMore.Account.Application.Handlers
             var newAccount = new Domain.Entities.ContaCorrente(request.Cpf, passwordHash, accountNumber);
 
             await _accountRepository.Add(newAccount);
-            return newAccount.Id;
+            return accountNumber;
         }
         private string HashPassword(string password)
         {
