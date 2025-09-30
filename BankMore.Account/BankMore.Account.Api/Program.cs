@@ -9,9 +9,11 @@ using BankMore.Account.Infrastructure.Repositories;
 using BankMore.Account.Infrastructure.Utils;
 using Dapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Net;
 using System.Text;
@@ -63,27 +65,19 @@ namespace BankMore.Account.Api
                 c.AddSecurityRequirement(securityRequirement);
             });
 
-            SqlMapper.AddTypeHandler(new GuidTypeHandler());
-
-            builder.Services.AddScoped<IAccountRepository, AccountRepository>();
-            builder.Services.AddScoped<ITokenService, TokenService>();
-
-            builder.Services.AddMediatR(cfg =>
-            {
-                cfg.RegisterServicesFromAssembly(typeof(RegisterAccountCommand).Assembly);
-            });
 
             // Utiliza SQLite
+
+            //SqlMapper.AddTypeHandler(new GuidTypeHandler());
+
             //var dbPath = Environment.GetEnvironmentVariable("SQLITE_DB_PATH")
             //             ?? Path.Combine(AppContext.BaseDirectory, "data", "app.db");
 
-            // Garante que o diretório existe
+            ////Garante que o diretório existe
             //Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
 
             //builder.Services.AddDbContext<MainContext>(options =>
             //    options.UseSqlite($"Data Source={dbPath}"));
-
-
 
             //builder.Services.AddScoped<IDbConnection>(sp =>
             //{
@@ -92,9 +86,27 @@ namespace BankMore.Account.Api
             //});
 
             //Utiliza Banco Oracle
+
             builder.Services.AddDbContext<MainContext>(options =>
                 options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection"))
             );
+
+            builder.Services.AddScoped<IDbConnection>(sp =>
+            {
+                var connectionString = builder.Configuration.GetConnectionString("OracleConnection");
+                var connection = new OracleConnection(connectionString);
+                connection.Open(); // Abre ao criar
+                return connection;
+            });
+
+            builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+            builder.Services.AddScoped<IMovementRepository, MovementRepository>();
+            builder.Services.AddScoped<ITokenService, TokenService>();
+
+            builder.Services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(typeof(RegisterAccountCommand).Assembly);
+            });
 
             // Configurações de JWT
             var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -111,6 +123,7 @@ namespace BankMore.Account.Api
                      ValidateAudience = true,
                      ValidateLifetime = true,
                      ValidateIssuerSigningKey = true,
+                     ClockSkew = TimeSpan.Zero,
                      ValidIssuer = jwtSettings["Issuer"],
                      ValidAudience = jwtSettings["Audience"],
                      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
@@ -120,6 +133,15 @@ namespace BankMore.Account.Api
                  {
                      OnAuthenticationFailed = context =>
                      {
+                         // Se a rota permitir [AllowAnonymous], não retorna 403
+                         var endpoint = context.HttpContext.GetEndpoint();
+                         var allowAnonymous = endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null;
+
+                         if (allowAnonymous)
+                         {
+                             return Task.CompletedTask;
+                         }
+
                          if (context.Exception is SecurityTokenExpiredException)
                          {
                              context.Response.StatusCode = (int)HttpStatusCode.Forbidden;

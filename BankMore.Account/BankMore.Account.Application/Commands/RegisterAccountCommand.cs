@@ -7,14 +7,15 @@ namespace BankMore.Account.Application.Commands
     /// </summary>
     public class RegisterAccountCommand : IRequest<string>
     {
-        public string Name { get; set; }
+        public string Nome { get; set; }
         public string Email { get; set; }
         public string Cpf { get; set; }
         public string Senha { get; set; }
 
-        public RegisterAccountCommand(string cpf, string senha)
+        public RegisterAccountCommand(string cpf, string nome,  string senha)
         {
             Cpf = cpf;
+            Nome = nome;
             Senha = senha;
         }
     }

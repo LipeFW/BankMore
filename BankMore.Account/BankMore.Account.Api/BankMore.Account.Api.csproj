@@ -10,6 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="app\**" />
+    <Content Remove="app\**" />
+    <EmbeddedResource Remove="app\**" />
+    <None Remove="app\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MediatR" Version="13.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.20" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
@@ -18,6 +25,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Oracle.EntityFrameworkCore" Version="9.23.90" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.9.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
   </ItemGroup>
@@ -26,10 +34,6 @@
     <ProjectReference Include="..\BankMore.Account.Application\BankMore.Account.Application.csproj" />
     <ProjectReference Include="..\BankMore.Account.Domain\BankMore.Account.Domain.csproj" />
     <ProjectReference Include="..\BankMore.Account.Infrastructure\BankMore.Account.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="app\data\" />
   </ItemGroup>
 
 </Project>

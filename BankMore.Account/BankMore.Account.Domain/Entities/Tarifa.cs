@@ -2,8 +2,8 @@
 {
     public class Tarifa
     {
-        public int IdTarifa { get; set; }
-        public int IdContaCorrente { get; set; }
+        public Guid IdTarifa { get; set; }
+        public Guid IdContaCorrente { get; set; }
         public DateTime DataMovimento { get; set; }
         public decimal Valor { get; set; }
 

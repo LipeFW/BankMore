@@ -6,7 +6,7 @@
     public class CreateAccountDto
     {
         /// <summary>
-        /// CPF do titular da conta
+        /// CPF do titular da conta corrente
         /// </summary>
         public string Cpf { get; set; } = string.Empty;
 
@@ -14,5 +14,10 @@
         /// Senha da conta
         /// </summary>
         public string Senha { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Nome do titular da conta corrente
+        /// </summary>
+        public string Nome { get; set; } = string.Empty;
     }
 }

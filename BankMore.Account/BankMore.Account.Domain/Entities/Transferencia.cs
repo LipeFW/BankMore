@@ -2,9 +2,9 @@
 {
     public class Transferencia
     {
-        public int IdTransferencia { get; set; }
-        public int IdContaCorrenteOrigem { get; set; }
-        public int IdContaCorrenteDestino { get; set; }
+        public Guid IdTransferencia { get; set; }
+        public Guid IdContaCorrenteOrigem { get; set; }
+        public Guid IdContaCorrenteDestino { get; set; }
         public DateTime DataMovimento { get; set; }
         public decimal Valor { get; set; }
     }

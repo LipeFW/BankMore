@@ -8,5 +8,6 @@ namespace BankMore.Account.Domain.Interfaces
         Task Add(ContaCorrente account);
         Task<ContaCorrente> GetByOrAccountNumberCpf(string cpfOrAccontNumber);
         Task<ContaCorrente> GetById(string id);
+        Task<ContaCorrente> GetByAccountNumber(string accountNumber);
     }
 }

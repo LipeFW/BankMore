@@ -29,7 +29,7 @@ namespace BankMore.Account.Application.Services
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddSeconds(30),
+                expires: DateTime.UtcNow.AddMinutes(60),
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
             );
 

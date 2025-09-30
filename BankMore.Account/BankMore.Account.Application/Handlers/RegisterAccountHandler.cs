@@ -1,4 +1,5 @@
 ﻿using BankMore.Account.Application.Commands;
+using BankMore.Account.Domain.Entities;
 using BankMore.Account.Domain.Exceptions;
 using BankMore.Account.Domain.Interfaces;
 using BankMore.Account.Domain.Utils;
@@ -26,12 +27,12 @@ namespace BankMore.Account.Application.Handlers
             if (existingAccount != null)
                 throw new InvalidOperationException("Conta já cadastrada.");
 
-            var passwordHash = HashPassword(request.Senha);
-            var accountNumber = GenerateAccountNumber();
-            var newAccount = new Domain.Entities.ContaCorrente(request.Cpf, passwordHash, accountNumber);
+            var senhaHash = HashPassword(request.Senha);
+            var numeroConta = GenerateAccountNumber();
+            var newAccount = new ContaCorrente(request.Cpf, request.Nome, senhaHash, numeroConta);
 
             await _repository.Add(newAccount);
-            return accountNumber;
+            return numeroConta;
         }
         private string HashPassword(string password)
         {

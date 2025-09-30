@@ -12,12 +12,18 @@
         public ICollection<Movimento> Movimentos { get; set; } = new List<Movimento>();
         public ICollection<Tarifa> Tarifas { get; set; } = new List<Tarifa>();
 
-        public ContaCorrente(string cpf, string passwordHash, string accountNumber)
+        public ContaCorrente()
+        {
+
+        }
+
+        public ContaCorrente(string cpf, string nome, string senha, string numero )
         {
             IdContaCorrente = Guid.NewGuid();
             Cpf = cpf;
-            Senha = passwordHash;
-            Numero = accountNumber;
+            Nome = nome;
+            Senha = senha;
+            Numero = numero;
             Ativo = true;
         }
 

@@ -17,7 +17,7 @@ namespace BankMore.Account.Infrastructure.Repositories
         public async Task<ContaCorrente> GetByCpf(string cpf)
         {
             var sql = @"
-                SELECT Id, Cpf, PasswordHash, AccountNumber, Active
+                SELECT IdContaCorrente, Cpf, Nome, Senha, Numero, Ativo
                 FROM ContaCorrente
                 WHERE Cpf = @cpf";
 
@@ -27,18 +27,18 @@ namespace BankMore.Account.Infrastructure.Repositories
         public async Task Add(ContaCorrente account)
         {
             var sql = @"
-                INSERT INTO ContaCorrente (Id, Cpf, PasswordHash, AccountNumber, Active)
-                VALUES (@Id, @Cpf, @PasswordHash, @AccountNumber, @Active)";
+                INSERT INTO ContaCorrente (IdContaCorrente, Cpf, Nome, Senha, Numero, Ativo)
+                VALUES (@IdContaCorrente, @Cpf, @Nome, @Senha, @Numero, @Ativo)";
             await _db.ExecuteAsync(sql, account);
         }
 
         public async Task<ContaCorrente> GetByOrAccountNumberCpf(string cpfOrAccontNumber)
         {
             var sql = @"
-                SELECT Id, Cpf, PasswordHash, AccountNumber, Active
+                SELECT IdContaCorrente, Cpf, Nome, Senha, Numero, Ativo
                 FROM ContaCorrente
                 WHERE Cpf = @cpfOrAccontNumber
-                OR AccountNumber = @cpfOrAccontNumber";
+                OR Numero = @cpfOrAccontNumber";
 
             return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { cpfOrAccontNumber });
         }
@@ -46,11 +46,21 @@ namespace BankMore.Account.Infrastructure.Repositories
         public async Task<ContaCorrente> GetById(string id)
         {
             var sql = @"
-                SELECT Id, Cpf, PasswordHash, AccountNumber, Active
+                SELECT IdContaCorrente, Cpf, Nome, Senha, Numero, Ativo
                 FROM ContaCorrente
-                WHERE Id = @id";
+                WHERE IdContaCorrente = @id";
 
             return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { id });
+        }
+
+        public async Task<ContaCorrente> GetByAccountNumber(string accountNumber)
+        {
+            var sql = @"
+                SELECT IdContaCorrente, Cpf, Nome, Senha, Numero, Ativo
+                FROM ContaCorrente
+                WHERE Numero = @accountNumber";
+
+            return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { accountNumber });
         }
     }
 }
