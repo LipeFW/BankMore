@@ -9,11 +9,11 @@ namespace BankMore.Account.Application.Handlers
 {
     public class RegisterAccountHandler : IRequestHandler<RegisterAccountCommand, string>
     {
-        private readonly IAccountRepository _accountRepository;
+        private readonly IAccountRepository _repository;
 
-        public RegisterAccountHandler(IAccountRepository accountRepository)
+        public RegisterAccountHandler(IAccountRepository repository)
         {
-            _accountRepository = accountRepository;
+            _repository = repository;
         }
 
         public async Task<string> Handle(RegisterAccountCommand request, CancellationToken cancellationToken)
@@ -21,7 +21,7 @@ namespace BankMore.Account.Application.Handlers
             if (!CpfUtils.IsValid(request.Cpf))
                 throw new InvalidDocumentException("CPF inválido.");
 
-            var existingAccount = await _accountRepository.GetByCpf(request.Cpf);
+            var existingAccount = await _repository.GetByCpf(request.Cpf);
 
             if (existingAccount != null)
                 throw new InvalidOperationException("Conta já cadastrada.");
@@ -30,7 +30,7 @@ namespace BankMore.Account.Application.Handlers
             var accountNumber = GenerateAccountNumber();
             var newAccount = new Domain.Entities.ContaCorrente(request.Cpf, passwordHash, accountNumber);
 
-            await _accountRepository.Add(newAccount);
+            await _repository.Add(newAccount);
             return accountNumber;
         }
         private string HashPassword(string password)

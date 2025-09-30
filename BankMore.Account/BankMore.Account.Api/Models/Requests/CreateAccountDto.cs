@@ -1,9 +1,9 @@
-﻿namespace BankMore.Account.Api.Models
+﻿namespace BankMore.Account.Api.Models.Requests
 {
     /// <summary>
     /// DTO usado para cadastrar uma nova conta corrente.
     /// </summary>
-    public class RegisterDto
+    public class CreateAccountDto
     {
         /// <summary>
         /// CPF do titular da conta

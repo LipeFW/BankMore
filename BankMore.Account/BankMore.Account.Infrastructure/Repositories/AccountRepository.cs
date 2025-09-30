@@ -42,5 +42,15 @@ namespace BankMore.Account.Infrastructure.Repositories
 
             return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { cpfOrAccontNumber });
         }
+
+        public async Task<ContaCorrente> GetById(string id)
+        {
+            var sql = @"
+                SELECT Id, Cpf, PasswordHash, AccountNumber, Active
+                FROM ContaCorrente
+                WHERE Id = @id";
+
+            return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { id });
+        }
     }
 }

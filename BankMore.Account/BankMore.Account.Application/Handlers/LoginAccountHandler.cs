@@ -21,14 +21,14 @@ namespace BankMore.Account.Application.Handlers
             var account = await _repository.GetByOrAccountNumberCpf(request.CpfOrAccountNumber);
 
             if (account == null)
-                throw new InvalidOperationException("Usuário não encontrado");
+                throw new Exception("Usuário não encontrado");
 
             var loginHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(request.Senha));
 
-            if (Comparer<string>.Default.Compare(account.PasswordHash, loginHash) != 0)
-                throw new ArgumentException("Senha inválida");
+            if (Comparer<string>.Default.Compare(account.Senha, loginHash) != 0)
+                throw new Exception("Senha inválida");
 
-            return _jwtService.GenerateToken(account.Id.ToString());
+            return _jwtService.GenerateToken(account.IdContaCorrente.ToString());
         }
     }
 }

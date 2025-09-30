@@ -18,7 +18,7 @@ namespace BankMore.Account.Application.Services
 
         public string GenerateToken(string accountId)
         {
-            var key = Encoding.UTF8.GetBytes("MinhaChaveSuperSecreta_1234567890!!");
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, accountId),
@@ -26,10 +26,10 @@ namespace BankMore.Account.Application.Services
             };
 
             var token = new JwtSecurityToken(
-                issuer: "bankmore",
-                audience: "bankmore-client",
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(60),
+                expires: DateTime.UtcNow.AddSeconds(30),
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
             );
 

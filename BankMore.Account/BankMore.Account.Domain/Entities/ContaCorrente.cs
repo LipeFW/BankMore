@@ -2,23 +2,25 @@
 {
     public class ContaCorrente
     {
-        public Guid Id { get; private set; }
+        public Guid IdContaCorrente { get; private set; }
         public string Cpf { get; private set; }
-        public string PasswordHash { get; private set; }
-        public string AccountNumber { get; private set; }
-        public bool Active { get; private set; }
+        public string Nome { get; private set; }
+        public string Senha { get; private set; }
+        public string Numero { get; private set; }
+        public bool Ativo { get; private set; }
 
-        private ContaCorrente() { }
+        public ICollection<Movimento> Movimentos { get; set; } = new List<Movimento>();
+        public ICollection<Tarifa> Tarifas { get; set; } = new List<Tarifa>();
 
         public ContaCorrente(string cpf, string passwordHash, string accountNumber)
         {
-            Id = Guid.NewGuid();
+            IdContaCorrente = Guid.NewGuid();
             Cpf = cpf;
-            PasswordHash = passwordHash;
-            AccountNumber = accountNumber;
-            Active = true;
+            Senha = passwordHash;
+            Numero = accountNumber;
+            Ativo = true;
         }
 
-        public void Deactivate() => Active = false;
+        public void Deactivate() => Ativo = false;
     }
 }
