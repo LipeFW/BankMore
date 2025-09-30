@@ -11,7 +11,9 @@ using Dapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Data;
+using System.Net;
 using System.Text;
 
 namespace BankMore.Account.Api
@@ -27,7 +29,39 @@ namespace BankMore.Account.Api
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "BankMore.Account API", Version = "v1" });
+
+                var securityScheme = new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Insira o token JWT desta forma: Bearer {seu token}"
+                };
+
+                c.AddSecurityDefinition("Bearer", securityScheme);
+
+                var securityRequirement = new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            };
+
+                c.AddSecurityRequirement(securityRequirement);
+            });
 
             SqlMapper.AddTypeHandler(new GuidTypeHandler());
 
@@ -39,20 +73,28 @@ namespace BankMore.Account.Api
                 cfg.RegisterServicesFromAssembly(typeof(RegisterAccountCommand).Assembly);
             });
 
-            var dbPath = Environment.GetEnvironmentVariable("SQLITE_DB_PATH")
-                         ?? Path.Combine(AppContext.BaseDirectory, "data", "app.db");
+            // Utiliza SQLite
+            //var dbPath = Environment.GetEnvironmentVariable("SQLITE_DB_PATH")
+            //             ?? Path.Combine(AppContext.BaseDirectory, "data", "app.db");
 
             // Garante que o diretório existe
-            Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+            //Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
 
+            //builder.Services.AddDbContext<MainContext>(options =>
+            //    options.UseSqlite($"Data Source={dbPath}"));
+
+
+
+            //builder.Services.AddScoped<IDbConnection>(sp =>
+            //{
+            //    var context = new SQLiteContext($"Data Source={dbPath}");
+            //    return context.CreateConnection();
+            //});
+
+            //Utiliza Banco Oracle
             builder.Services.AddDbContext<MainContext>(options =>
-                options.UseSqlite($"Data Source={dbPath}"));
-
-            builder.Services.AddScoped<IDbConnection>(sp =>
-            {
-                var context = new SQLiteContext($"Data Source={dbPath}");
-                return context.CreateConnection();
-            });
+                options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection"))
+            );
 
             // Configurações de JWT
             var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -60,24 +102,35 @@ namespace BankMore.Account.Api
 
             var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
 
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(key)
-                };
-            });
+            builder.Services.AddAuthentication("Bearer")
+             .AddJwtBearer("Bearer", options =>
+             {
+                 options.TokenValidationParameters = new TokenValidationParameters
+                 {
+                     ValidateIssuer = true,
+                     ValidateAudience = true,
+                     ValidateLifetime = true,
+                     ValidateIssuerSigningKey = true,
+                     ValidIssuer = jwtSettings["Issuer"],
+                     ValidAudience = jwtSettings["Audience"],
+                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
+                 };
+
+                 options.Events = new JwtBearerEvents
+                 {
+                     OnAuthenticationFailed = context =>
+                     {
+                         if (context.Exception is SecurityTokenExpiredException)
+                         {
+                             context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                             context.Response.ContentType = "application/json";
+                             return context.Response.WriteAsync("{\"message\": \"Token expirado\"}");
+                         }
+
+                         return Task.CompletedTask;
+                     }
+                 };
+             });
 
             builder.Services.AddAuthorization();
 
@@ -89,15 +142,12 @@ namespace BankMore.Account.Api
                 db.Database.Migrate();
             }
 
-            // Configure the HTTP request pipeline.
-            //if (app.Environment.IsDevelopment())
-            //{
             app.UseSwagger();
             app.UseSwaggerUI();
-            //}
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
 
