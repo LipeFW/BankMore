@@ -1,5 +1,7 @@
-﻿using BankMore.Account.Api.Models.Requests;
-using BankMore.Account.Application.Commands;
+﻿using BankMore.Account.Application.Commands;
+using BankMore.Account.Application.Queries;
+using BankMore.Account.Domain.DTOs.Requests;
+using BankMore.Account.Domain.DTOs.Responses;
 using BankMore.Account.Domain.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +16,7 @@ namespace BankMore.Account.Api.Controllers
     public class AccountsController : ControllerBase
     {
         private readonly IMediator _mediator;
+
         public AccountsController(IMediator mediator)
         {
             _mediator = mediator;
@@ -22,17 +25,19 @@ namespace BankMore.Account.Api.Controllers
         /// <summary>
         /// Responsável pela criação de uma nova conta corrente
         /// </summary>
-        /// <returns>O número da conta que foi criada</returns>
-        /// <response code="200">O número da conta que foi criadas</response>
-        /// <param name="dto">Infos da conta corrente à ser criada. Objeto CreateAccountDto</param>
+        /// <param name="dto">Informações da conta corrente a ser criada</param>
+        /// <returns>O número da conta criada</returns>
         [AllowAnonymous]
-        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(typeof(CreateAccountResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpPost]
-        public async Task<IActionResult> CreateAccount([FromBody] CreateAccountDto dto)
+        public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest dto)
         {
             try
             {
-                var result = await _mediator.Send(new RegisterAccountCommand(dto.Cpf, dto.Nome, dto.Senha));
+                var result = await _mediator.Send(new CreateAccountCommand(dto.Cpf, dto.Nome, dto.Senha));
 
                 return Ok(new { numeroConta = result });
             }
@@ -42,9 +47,20 @@ namespace BankMore.Account.Api.Controllers
             }
         }
 
+        /// <summary>
+        /// Responsável por efetuar o login na conta corrente
+        /// </summary>
+        /// <returns>O Token de autenticação (JWT).</returns>
+        /// <response code="200">Token de autenticação (JWT).</response>
+        /// <response code="401"></response>
+        /// <response code="403"></response>
+        /// <param name="dto">Dados para efetuar o login. Objeto LoginAccountDto</param>
         [AllowAnonymous]
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(typeof(string), 401)]
+        [ProducesResponseType(typeof(string), 403)]
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginAccountDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginAccountRequest dto)
         {
             try
             {
@@ -57,7 +73,16 @@ namespace BankMore.Account.Api.Controllers
             }
         }
 
+        /// <summary>
+        /// Responsável por inativar uma conta corrente
+        /// </summary>
+        /// <response code="200">Token de autenticação (JWT).</response>
+        /// <param name="dto">Dados para efetuar o login. Objeto LoginAccountDto</param>
         [Authorize]
+        [ProducesResponseType(typeof(string), 204)]
+        [ProducesResponseType(typeof(string), 400)]
+        [ProducesResponseType(typeof(string), 401)]
+        [ProducesResponseType(typeof(string), 403)]
         [HttpDelete]
         public async Task<IActionResult> Deactivate([FromBody] string senha)
         {
@@ -75,9 +100,17 @@ namespace BankMore.Account.Api.Controllers
             }
         }
 
+        /// <summary>
+        /// Responsável por efetuar movimentações nas contas corrente
+        /// </summary>
+        /// <param name="dto">Informações da movimentação</param>
         [Authorize]
+        [ProducesResponseType(typeof(string), 204)]
+        [ProducesResponseType(typeof(string), 400)]
+        [ProducesResponseType(typeof(string), 401)]
+        [ProducesResponseType(typeof(string), 403)]
         [HttpPost("movements")]
-        public async Task<IActionResult> GetAccountMovements([FromBody] MovementAccountDto dto)
+        public async Task<IActionResult> GetAccountMovements([FromBody] MovementAccountRequest dto)
         {
             try
             {
@@ -86,6 +119,40 @@ namespace BankMore.Account.Api.Controllers
 
                 await _mediator.Send(new MovementAccountCommand(dto.RequestId, dto.AccountNumber, accountId, dto.Valor, dto.Tipo));
                 return NoContent();
+            }
+            catch (InvalidAccountException ex)
+            {
+                return BadRequest(new { message = ex.Message, type = "INVALID_ACCOUNT" });
+            }
+            catch (InactiveAccountException ex)
+            {
+                return BadRequest(new { message = ex.Message, type = "INACTIVE_ACCOUNT" });
+            }
+            catch (InvalidTypeException ex)
+            {
+                return BadRequest(new { message = ex.Message, type = "INVALID_TYPE" });
+            }
+        }
+
+        /// <summary>
+        /// Responsável por efetuar movimentações nas contas corrente
+        /// </summary>
+        /// <param name="dto">Informações da movimentação</param>
+        [Authorize]
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(typeof(string), 400)]
+        [ProducesResponseType(typeof(string), 401)]
+        [ProducesResponseType(typeof(string), 403)]
+        [HttpPost("balance")]
+        public async Task<IActionResult> GetAccountBalance([FromBody] AccountBalanceRequest dto)
+        {
+            try
+            {
+                var accountId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                                HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+                var result = await _mediator.Send(new AccountBalanceQuery(new Guid(accountId), dto.NumeroConta));
+                return Ok(result);
             }
             catch (InvalidAccountException ex)
             {

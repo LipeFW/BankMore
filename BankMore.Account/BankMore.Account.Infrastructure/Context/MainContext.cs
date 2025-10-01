@@ -1,6 +1,5 @@
 ﻿using BankMore.Account.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BankMore.Account.Infrastructure.Context
 {
@@ -13,19 +12,11 @@ namespace BankMore.Account.Infrastructure.Context
 
         public DbSet<ContaCorrente> ContasCorrentes { get; set; }
         public DbSet<Movimento> Movimentos { get; set; }
-        public DbSet<Transferencia> Transferencias { get; set; }
-        public DbSet<Tarifa> Tarifas { get; set; }
         public DbSet<Idempotencia> Idempotencias { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            var guidConverter = new ValueConverter<Guid, byte[]>(
-        v => v.ToByteArray(),
-        v => new Guid(v));
-
-            // -----------------------------
-            // Conta Corrente
-            // -----------------------------
+            // ContaCorrente
             modelBuilder.Entity<ContaCorrente>(entity =>
             {
                 entity.ToTable("CONTACORRENTE");
@@ -33,35 +24,36 @@ namespace BankMore.Account.Infrastructure.Context
                 entity.HasKey(e => e.IdContaCorrente);
 
                 entity.Property(e => e.IdContaCorrente)
-                      .HasColumnType("RAW(16)")
-                      .HasConversion(guidConverter)
-                      .IsRequired();
+                  .HasConversion(
+                      v => v.ToString("D"),       
+                      v => Guid.Parse(v))
+                  .HasColumnType("NVARCHAR2(37)")
+                  .IsRequired();
 
                 entity.Property(e => e.Numero)
-                      .HasMaxLength(20)
                       .IsRequired();
+
+                entity.HasIndex(e => e.Numero)
+                      .IsUnique();
 
                 entity.Property(e => e.Nome)
                       .HasMaxLength(100)
                       .IsRequired();
 
-                entity.Property(e => e.Cpf)
-                      .HasMaxLength(20)
-                      .IsRequired();
-
-                entity.Property(e => e.Senha)
-                      .HasMaxLength(200)
-                      .IsRequired();
-
-                // Boolean mapeado como NUMBER(1)
                 entity.Property(e => e.Ativo)
                       .HasColumnType("NUMBER(1)")
                       .IsRequired();
+
+                entity.Property(e => e.Senha)
+                      .HasMaxLength(100)
+                      .IsRequired();
+
+                entity.Property(e => e.Salt)
+                      .HasMaxLength(100)
+                      .IsRequired();
             });
 
-            // -----------------------------
             // Movimento
-            // -----------------------------
             modelBuilder.Entity<Movimento>(entity =>
             {
                 entity.ToTable("MOVIMENTO");
@@ -69,12 +61,29 @@ namespace BankMore.Account.Infrastructure.Context
                 entity.HasKey(e => e.IdMovimento);
 
                 entity.Property(e => e.IdMovimento)
-                      .HasColumnType("RAW(16)")
-                      .HasConversion(guidConverter)
+                 .HasConversion(
+                     v => v.ToString("D"),
+                     v => Guid.Parse(v))
+                 .HasColumnType("NVARCHAR2(37)")
+                 .IsRequired();
+
+                entity.Property(e => e.IdContaCorrente)
+                  .HasConversion(
+                      v => v.ToString("D"),
+                      v => Guid.Parse(v))
+                  .HasColumnType("NVARCHAR2(37)")
+                  .IsRequired();
+
+                entity.Property(e => e.DataMovimento)
+                      .HasMaxLength(25)
+                      .IsRequired();
+
+                entity.Property(e => e.TipoMovimento)
+                      .HasMaxLength(1)
                       .IsRequired();
 
                 entity.Property(e => e.Valor)
-                      .HasPrecision(18, 2)
+                      .HasColumnType("NUMBER(12,2)")
                       .IsRequired();
 
                 entity.HasOne(e => e.ContaCorrente)
@@ -82,60 +91,26 @@ namespace BankMore.Account.Infrastructure.Context
                       .HasForeignKey(e => e.IdContaCorrente);
             });
 
-            // -----------------------------
-            // Transferência
-            // -----------------------------
-            modelBuilder.Entity<Transferencia>(entity =>
-            {
-                entity.ToTable("TRANSFERENCIA");
-
-                entity.HasKey(e => e.IdTransferencia);
-
-                entity.Property(e => e.IdTransferencia)
-                      .HasColumnType("RAW(16)")
-                      .HasConversion(guidConverter)
-                      .IsRequired();
-
-                entity.Property(e => e.Valor)
-                      .HasPrecision(18, 2)
-                      .IsRequired();
-            });
-
-            // -----------------------------
-            // Tarifa
-            // -----------------------------
-            modelBuilder.Entity<Tarifa>(entity =>
-            {
-                entity.ToTable("TARIFA");
-
-                entity.HasKey(e => e.IdTarifa);
-
-                entity.Property(e => e.IdTarifa)
-                      .HasColumnType("RAW(16)")
-                      .HasConversion(guidConverter)
-                      .IsRequired();
-
-                entity.Property(e => e.Valor)
-                      .HasPrecision(18, 2)
-                      .IsRequired();
-
-                entity.HasOne(e => e.ContaCorrente)
-                      .WithMany(c => c.Tarifas)
-                      .HasForeignKey(e => e.IdContaCorrente);
-            });
-
-            // -----------------------------
-            // Idempotência
-            // -----------------------------
+            // Idempotencia
             modelBuilder.Entity<Idempotencia>(entity =>
             {
                 entity.ToTable("IDEMPOTENCIA");
 
-                entity.HasKey(e => e.Chave_Idempotencia);
+                entity.HasKey(e => e.ChaveIdempotencia);
 
-                entity.Property(e => e.Chave_Idempotencia)
-                      .HasMaxLength(100)
-                      .IsRequired();
+                entity.Property(e => e.ChaveIdempotencia)
+                .HasColumnName("Chave_Idempotencia")
+                  .HasConversion(
+                      v => v.ToString("D"),
+                      v => Guid.Parse(v))
+                  .HasColumnType("NVARCHAR2(37)")
+                  .IsRequired();
+
+                entity.Property(e => e.Requisicao)
+                      .HasMaxLength(1000);
+
+                entity.Property(e => e.Resultado)
+                      .HasMaxLength(1000);
             });
 
             base.OnModelCreating(modelBuilder);

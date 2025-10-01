@@ -4,7 +4,6 @@ using BankMore.Account.Application.Commands;
 using BankMore.Account.Application.Services;
 using BankMore.Account.Domain.Interfaces;
 using BankMore.Account.Infrastructure.Context;
-using BankMore.Account.Infrastructure.Data;
 using BankMore.Account.Infrastructure.Repositories;
 using BankMore.Account.Infrastructure.Utils;
 using Dapper;
@@ -16,6 +15,7 @@ using Microsoft.OpenApi.Models;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Net;
+using System.Reflection;
 using System.Text;
 
 namespace BankMore.Account.Api
@@ -63,12 +63,15 @@ namespace BankMore.Account.Api
             };
 
                 c.AddSecurityRequirement(securityRequirement);
+
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
 
+            SqlMapper.AddTypeHandler(new GuidTypeHandler());
 
             // Utiliza SQLite
-
-            //SqlMapper.AddTypeHandler(new GuidTypeHandler());
 
             //var dbPath = Environment.GetEnvironmentVariable("SQLITE_DB_PATH")
             //             ?? Path.Combine(AppContext.BaseDirectory, "data", "app.db");
@@ -105,7 +108,7 @@ namespace BankMore.Account.Api
 
             builder.Services.AddMediatR(cfg =>
             {
-                cfg.RegisterServicesFromAssembly(typeof(RegisterAccountCommand).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(CreateAccountCommand).Assembly);
             });
 
             // Configurações de JWT

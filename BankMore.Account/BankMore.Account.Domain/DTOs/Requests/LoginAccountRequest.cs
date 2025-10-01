@@ -1,6 +1,6 @@
-﻿namespace BankMore.Account.Api.Models.Requests
+﻿namespace BankMore.Account.Domain.DTOs.Requests
 {
-    public class LoginAccountDto
+    public class LoginAccountRequest
     {
         public string CpfOrAccountNumber { get; set; }
         public string Senha { get; set; }

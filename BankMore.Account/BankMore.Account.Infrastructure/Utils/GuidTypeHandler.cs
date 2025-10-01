@@ -7,14 +7,12 @@ namespace BankMore.Account.Infrastructure.Utils
     {
         public override void SetValue(IDbDataParameter parameter, Guid value)
         {
-            // Salva Guid como string no SQLite
-            parameter.Value = value.ToString();
+            parameter.Value = value.ToString("D");
         }
 
         public override Guid Parse(object value)
         {
-            // Lê string e converte para Guid
-            return Guid.Parse(value.ToString());
+            return Guid.Parse((string)value);
         }
     }
 }

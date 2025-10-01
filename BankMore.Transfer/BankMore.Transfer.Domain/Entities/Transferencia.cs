@@ -1,4 +1,4 @@
-﻿namespace BankMore.Account.Domain.Entities
+﻿namespace BankMore.Transfer.Domain.Entities
 {
     public class Transferencia
     {

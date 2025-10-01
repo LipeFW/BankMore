@@ -1,13 +1,13 @@
-﻿namespace BankMore.Account.Domain.Entities
+﻿namespace BankMore.Tariff.Domain.Entities
 {
-    public class Tarifa
+    public class Movimento
     {
-        public Guid IdTarifa { get; set; }
+        public Guid IdMovimento { get; set; }
         public Guid IdContaCorrente { get; set; }
         public DateTime DataMovimento { get; set; }
+        public char TipoMovimento { get; set; }
         public decimal Valor { get; set; }
 
-        // Navegação
         public ContaCorrente ContaCorrente { get; set; }
     }
 }

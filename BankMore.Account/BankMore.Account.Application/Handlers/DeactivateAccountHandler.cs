@@ -17,7 +17,7 @@ namespace BankMore.Account.Application.Handlers
 
         public async Task Handle(DeactivateAccountCommand request, CancellationToken cancellationToken)
         {
-            var account = await _repository.GetById(request.AccountId);
+            var account = await _repository.GetByIdAsync(request.AccountId);
 
             if (account is null)
                 throw new InvalidAccountException("A conta informada não existe.");

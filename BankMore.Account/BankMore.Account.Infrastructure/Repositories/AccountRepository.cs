@@ -14,53 +14,65 @@ namespace BankMore.Account.Infrastructure.Repositories
             _db = db;
         }
 
-        public async Task<ContaCorrente> GetByCpf(string cpf)
+        public async Task<ContaCorrente> GetByCpfAsync(string cpf)
         {
             var sql = @"
-                SELECT IdContaCorrente, Cpf, Nome, Senha, Numero, Ativo
+                SELECT ""IdContaCorrente"", ""Cpf"", ""Nome"", ""Senha"", ""Numero"", ""Ativo""
                 FROM ContaCorrente
-                WHERE Cpf = @cpf";
+                WHERE ""Cpf"" = :cpf";
 
             return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { cpf });
         }
-
-        public async Task Add(ContaCorrente account)
+        
+        public async Task AddAsync(ContaCorrente account)
         {
-            var sql = @"
-                INSERT INTO ContaCorrente (IdContaCorrente, Cpf, Nome, Senha, Numero, Ativo)
-                VALUES (@IdContaCorrente, @Cpf, @Nome, @Senha, @Numero, @Ativo)";
-            await _db.ExecuteAsync(sql, account);
+            var sql = @"INSERT INTO ContaCorrente (""IdContaCorrente"", ""Cpf"", ""Nome"", ""Senha"", ""Numero"", ""Ativo"", ""Salt"")
+                        VALUES (:IdContaCorrente, :Cpf, :Nome, :Senha, :Numero, :Ativo, :Salt)";
+
+            var parameters = new DynamicParameters();
+            parameters.Add("IdContaCorrente", account.IdContaCorrente.ToString("D"));
+            parameters.Add("Cpf", account.Cpf);
+            parameters.Add("Nome", account.Nome);
+            parameters.Add("Senha", account.Senha);
+            parameters.Add("Numero", account.Numero);
+            parameters.Add("Ativo", account.Ativo ? 1 : 0);
+            parameters.Add("Salt", account.Salt);
+
+            await _db.ExecuteAsync(sql, parameters);
         }
 
-        public async Task<ContaCorrente> GetByOrAccountNumberCpf(string cpfOrAccontNumber)
+        public async Task<ContaCorrente> GetByIdAsync(string id)
         {
-            var sql = @"
-                SELECT IdContaCorrente, Cpf, Nome, Senha, Numero, Ativo
-                FROM ContaCorrente
-                WHERE Cpf = @cpfOrAccontNumber
-                OR Numero = @cpfOrAccontNumber";
-
-            return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { cpfOrAccontNumber });
-        }
-
-        public async Task<ContaCorrente> GetById(string id)
-        {
-            var sql = @"
-                SELECT IdContaCorrente, Cpf, Nome, Senha, Numero, Ativo
-                FROM ContaCorrente
-                WHERE IdContaCorrente = @id";
+            var sql = @"SELECT ""IdContaCorrente"", ""Cpf"", ""Nome"", ""Senha"", ""Numero"", ""Ativo""
+                        FROM ContaCorrente
+                        WHERE ""IdContaCorrente"" = :id";
 
             return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { id });
         }
 
-        public async Task<ContaCorrente> GetByAccountNumber(string accountNumber)
+        public async Task<ContaCorrente> GetByAccountNumberAsync(int accountNumber)
         {
-            var sql = @"
-                SELECT IdContaCorrente, Cpf, Nome, Senha, Numero, Ativo
-                FROM ContaCorrente
-                WHERE Numero = @accountNumber";
+            var sql = @"SELECT ""IdContaCorrente"", ""Cpf"", ""Nome"", ""Senha"", ""Numero"", ""Ativo""
+                        FROM ContaCorrente
+                        WHERE ""Numero"" = :accountNumber";
 
             return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { accountNumber });
+        }
+
+        public async Task<decimal> GetSaldoAsync(string idContaCorrente)
+        {
+            string sql = @"SELECT 
+                                NVL(SUM(CASE WHEN m.""TipoMovimento"" = 'C' THEN m.""Valor""
+                                             WHEN m.""TipoMovimento"" = 'D' THEN -m.""Valor""
+                                             ELSE 0 END), 0) AS ""Saldo""
+                            FROM ContaCorrente c
+                            LEFT JOIN Movimento m ON c.""IdContaCorrente"" = m.""IdContaCorrente""
+                            WHERE c.""IdContaCorrente"" = :IdContaCorrente
+                            GROUP BY c.""Numero"", c.""Nome""";
+
+            return await _db.QuerySingleOrDefaultAsync<decimal>(
+                sql,
+                new { IdContaCorrente = idContaCorrente });
         }
     }
 }

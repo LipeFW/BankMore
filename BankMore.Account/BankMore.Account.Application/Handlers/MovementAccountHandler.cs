@@ -21,9 +21,9 @@ namespace BankMore.Account.Application.Handlers
 
         public async Task Handle(MovementAccountCommand request, CancellationToken cancellationToken)
         {
-            ContaCorrente account = !string.IsNullOrWhiteSpace(request.AccountNumber)
-                ? await _accountRepository.GetByAccountNumber(request.AccountNumber)
-                : account = await _accountRepository.GetById(request.AccountId);
+            ContaCorrente account = request.AccountNumber != 0
+                ? await _accountRepository.GetByAccountNumberAsync(request.AccountNumber)
+                : await _accountRepository.GetByIdAsync(request.AccountId);
 
             if (account is null)
                 throw new InvalidAccountException("Apenas contas correntes cadastradas podem receber movimentação");
@@ -34,10 +34,10 @@ namespace BankMore.Account.Application.Handlers
             if (request.Valor < 0)
                 throw new InvalidValueException("Apenas valores positivos podem ser recebidos.");
 
-            if (request.Tipo != 'C' && request.Tipo != 'D')
+            if (request.Tipo != "C" && request.Tipo != "D")
                 throw new InvalidTypeException("Apenas os tipos 'débito' e 'crédito' são aceitos.");
 
-            if (request.AccountNumber != null && request.AccountId != account.IdContaCorrente.ToString() && request.Tipo == 'D')
+            if (request.AccountNumber != null && request.AccountId != account.IdContaCorrente.ToString() && request.Tipo == "D")
                 throw new InvalidTypeException("Apenas 'crédito' é permitido em conta diferente.");
 
             var movimento = new Movimento

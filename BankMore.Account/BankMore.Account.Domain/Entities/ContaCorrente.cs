@@ -1,30 +1,33 @@
-﻿namespace BankMore.Account.Domain.Entities
+﻿using BankMore.Account.Domain.Models;
+
+namespace BankMore.Account.Domain.Entities
 {
     public class ContaCorrente
     {
-        public Guid IdContaCorrente { get; private set; }
-        public string Cpf { get; private set; }
-        public string Nome { get; private set; }
-        public string Senha { get; private set; }
-        public string Numero { get; private set; }
-        public bool Ativo { get; private set; }
+        public Guid IdContaCorrente { get; set; }
+        public int Numero { get; set; }
+        public string Nome { get; set; }
+        public string Cpf { get; set; }
+        public bool Ativo { get; set; }
+        public string Senha { get; set; }
+        public string Salt { get; set; }
 
         public ICollection<Movimento> Movimentos { get; set; } = new List<Movimento>();
-        public ICollection<Tarifa> Tarifas { get; set; } = new List<Tarifa>();
 
         public ContaCorrente()
         {
 
         }
 
-        public ContaCorrente(string cpf, string nome, string senha, string numero )
+        public ContaCorrente(string cpf, string nome, string senha, int numero, string salt )
         {
             IdContaCorrente = Guid.NewGuid();
-            Cpf = cpf;
-            Nome = nome;
-            Senha = senha;
             Numero = numero;
+            Nome = nome;
+            Cpf = cpf;
             Ativo = true;
+            Senha = senha;
+            Salt = salt;
         }
 
         public void Deactivate() => Ativo = false;

@@ -2,8 +2,10 @@
 {
     public static class CpfUtils
     {
-        public static bool IsValid(string cpf)
+        public static bool IsValid(string cpf, out string formattedCpf)
         {
+            formattedCpf = string.Empty;
+
             if (string.IsNullOrWhiteSpace(cpf))
                 return false;
 
@@ -41,6 +43,8 @@
                 resto = 11 - resto;
 
             digito += resto.ToString();
+
+            formattedCpf = cpf;
 
             return cpf.EndsWith(digito);
         }

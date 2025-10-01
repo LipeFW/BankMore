@@ -1,7 +1,10 @@
 ﻿using BankMore.Account.Application.Commands;
+using BankMore.Account.Domain.Entities;
 using BankMore.Account.Domain.Interfaces;
+using BankMore.Account.Domain.Utils;
 using MediatR;
-using System.Text;
+using System.Security.Principal;
+using BCryptHelper = BCrypt.Net.BCrypt;
 
 namespace BankMore.Account.Application.Handlers
 {
@@ -18,15 +21,22 @@ namespace BankMore.Account.Application.Handlers
 
         public async Task<string> Handle(LoginAccountCommand request, CancellationToken cancellationToken)
         {
-            var account = await _repository.GetByOrAccountNumberCpf(request.CpfOrAccountNumber);
+            if (string.IsNullOrWhiteSpace(request.CpfOrAccountNumber))
+                throw new Exception("CPF ou número da conta devem ser informados.");
 
-            if (account == null)
-                throw new Exception("Usuário não encontrado");
+            bool isNumeroConta = int.TryParse(request.CpfOrAccountNumber, out int numeroConta);
 
-            var loginHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(request.Senha));
+            ContaCorrente account;
 
-            if (Comparer<string>.Default.Compare(account.Senha, loginHash) != 0)
-                throw new Exception("Senha inválida");
+            if (isNumeroConta)
+                account = await _repository.GetByAccountNumberAsync(numeroConta);
+            else if(CpfUtils.IsValid(request.CpfOrAccountNumber, out var cpf))
+                account = await _repository.GetByCpfAsync(cpf);
+            else
+                throw new Exception("Usuário e/ou senha inválidos.");
+
+            if (account == null || !BCryptHelper.Verify(request.Senha, account.Senha))
+                throw new Exception("Usuário e/ou senha inválidos.");
 
             return _jwtService.GenerateToken(account.IdContaCorrente.ToString());
         }

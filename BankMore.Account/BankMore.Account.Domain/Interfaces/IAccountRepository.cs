@@ -4,10 +4,10 @@ namespace BankMore.Account.Domain.Interfaces
 {
     public interface IAccountRepository
     {
-        Task<ContaCorrente> GetByCpf(string cpf);
-        Task Add(ContaCorrente account);
-        Task<ContaCorrente> GetByOrAccountNumberCpf(string cpfOrAccontNumber);
-        Task<ContaCorrente> GetById(string id);
-        Task<ContaCorrente> GetByAccountNumber(string accountNumber);
+        Task AddAsync(ContaCorrente account);
+        Task<ContaCorrente> GetByCpfAsync(string cpf);
+        Task<ContaCorrente> GetByIdAsync(string id);
+        Task<ContaCorrente> GetByAccountNumberAsync(int accountNumber);
+        Task<decimal> GetSaldoAsync(string idContaCorrente);
     }
 }
