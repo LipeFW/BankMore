@@ -1,10 +1,9 @@
-﻿using BankMore.Account.Application.Commands;
-using BankMore.Account.Domain.Exceptions;
+﻿using BankMore.Account.Domain.Exceptions;
 using BankMore.Account.Domain.Interfaces;
 using MediatR;
 using System.Text;
 
-namespace BankMore.Account.Application.Handlers
+namespace BankMore.Account.Application.Commands
 {
     public class DeactivateAccountHandler : IRequestHandler<DeactivateAccountCommand>
     {

@@ -1,12 +1,11 @@
-﻿using BankMore.Account.Application.Commands;
-using BankMore.Account.Domain.Entities;
+﻿using BankMore.Account.Domain.Entities;
 using BankMore.Account.Domain.Exceptions;
 using BankMore.Account.Domain.Interfaces;
 using BankMore.Account.Domain.Utils;
 using MediatR;
 using BCryptHelper = BCrypt.Net.BCrypt;
 
-namespace BankMore.Account.Application.Handlers
+namespace BankMore.Account.Application.Commands
 {
     public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, int>
     {

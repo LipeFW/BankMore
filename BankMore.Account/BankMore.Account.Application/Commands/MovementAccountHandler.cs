@@ -1,11 +1,10 @@
-﻿using BankMore.Account.Application.Commands;
-using BankMore.Account.Domain.Entities;
+﻿using BankMore.Account.Domain.Entities;
 using BankMore.Account.Domain.Exceptions;
 using BankMore.Account.Domain.Interfaces;
 using MediatR;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace BankMore.Account.Application.Handlers
+namespace BankMore.Account.Application.Commands
 {
     public class MovementAccountHandler : IRequestHandler<MovementAccountCommand>
     {

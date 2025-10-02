@@ -17,13 +17,6 @@ COPY . .
 WORKDIR "/src/BankMore.Account/BankMore.Account.Api"
 RUN dotnet build "./BankMore.Account.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-RUN mkdir -p /app/data
-RUN chmod 777 /app/data
-
-VOLUME ["/app/data"]
-
-ENV SQLITE_DB_PATH=/app/data/app.db
-
 # Esta fase é usada para publicar o projeto de serviço a ser copiado para a fase final
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release

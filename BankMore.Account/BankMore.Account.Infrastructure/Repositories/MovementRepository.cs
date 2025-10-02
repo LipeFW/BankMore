@@ -2,6 +2,7 @@
 using BankMore.Account.Domain.Interfaces;
 using Dapper;
 using System.Data;
+using System.Security.Principal;
 
 namespace BankMore.Account.Infrastructure.Repositories
 {
@@ -17,9 +18,17 @@ namespace BankMore.Account.Infrastructure.Repositories
         public async Task Add(Movimento movement)
         {
             var sql = @"
-                INSERT INTO Movimento (IdMovimento, IdContaCorrente, DataMovimento, TipoMovimento, Valor)
+                INSERT INTO Movimento (""IdMovimento"", ""IdContaCorrente"", ""DataMovimento"", ""TipoMovimento"", ""Valor"")
                 VALUES (:IdMovimento, :IdContaCorrente, :DataMovimento, :TipoMovimento, :Valor)";
-            await _db.ExecuteAsync(sql, movement);
+
+            var parameters = new DynamicParameters();
+            parameters.Add("IdMovimento", movement.IdMovimento.ToString("D"));
+            parameters.Add("IdContaCorrente", movement.IdContaCorrente.ToString("D"));
+            parameters.Add("DataMovimento", movement.DataMovimento);
+            parameters.Add("TipoMovimento", movement.TipoMovimento);
+            parameters.Add("Valor", movement.Valor);
+
+            await _db.ExecuteAsync(sql, parameters);
         }
     }
 }

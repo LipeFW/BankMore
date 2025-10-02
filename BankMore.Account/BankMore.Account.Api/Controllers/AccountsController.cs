@@ -25,7 +25,7 @@ namespace BankMore.Account.Api.Controllers
         /// <summary>
         /// Responsável pela criação de uma nova conta corrente
         /// </summary>
-        /// <param name="dto">Informações da conta corrente a ser criada</param>
+        /// <param name="request">Informações da conta corrente a ser criada</param>
         /// <returns>O número da conta criada</returns>
         [AllowAnonymous]
         [ProducesResponseType(typeof(CreateAccountResponse), StatusCodes.Status200OK)]
@@ -33,11 +33,11 @@ namespace BankMore.Account.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpPost]
-        public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest dto)
+        public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest request)
         {
             try
             {
-                var result = await _mediator.Send(new CreateAccountCommand(dto.Cpf, dto.Nome, dto.Senha));
+                var result = await _mediator.Send(new CreateAccountCommand(request.Cpf, request.Nome, request.Senha));
 
                 return Ok(new { numeroConta = result });
             }
@@ -54,22 +54,22 @@ namespace BankMore.Account.Api.Controllers
         /// <response code="200">Token de autenticação (JWT).</response>
         /// <response code="401"></response>
         /// <response code="403"></response>
-        /// <param name="dto">Dados para efetuar o login. Objeto LoginAccountDto</param>
+        /// <param name="request">Dados para efetuar o login. Objeto LoginAccountDto</param>
         [AllowAnonymous]
         [ProducesResponseType(typeof(string), 200)]
         [ProducesResponseType(typeof(string), 401)]
         [ProducesResponseType(typeof(string), 403)]
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginAccountRequest dto)
+        public async Task<IActionResult> Login([FromBody] LoginAccountRequest request)
         {
             try
             {
-                var result = await _mediator.Send(new LoginAccountCommand(dto.CpfOrAccountNumber, dto.Senha));
+                var result = await _mediator.Send(new LoginAccountCommand(request.CpfOrAccountNumber, request.Senha));
                 return Ok(new { token = result });
             }
             catch (Exception ex)
             {
-                return Unauthorized(new { message = "Usuário e/ou senha inválidos", type = "USER_UNAUTHORIZED" });
+                return Unauthorized(new { message = ex.Message, type = "USER_UNAUTHORIZED" });
             }
         }
 
@@ -77,7 +77,7 @@ namespace BankMore.Account.Api.Controllers
         /// Responsável por inativar uma conta corrente
         /// </summary>
         /// <response code="200">Token de autenticação (JWT).</response>
-        /// <param name="dto">Dados para efetuar o login. Objeto LoginAccountDto</param>
+        /// <param name="senha">Senha do usuário.</param>
         [Authorize]
         [ProducesResponseType(typeof(string), 204)]
         [ProducesResponseType(typeof(string), 400)]
@@ -94,30 +94,30 @@ namespace BankMore.Account.Api.Controllers
                 await _mediator.Send(new DeactivateAccountCommand(accountId, senha));
                 return NoContent();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = "Houve um problema ao inativar a conta.", type = "INVALID_ACCOUNT" });
+                return BadRequest(new { message = ex.Message, type = "INVALID_ACCOUNT" });
             }
         }
 
         /// <summary>
         /// Responsável por efetuar movimentações nas contas corrente
         /// </summary>
-        /// <param name="dto">Informações da movimentação</param>
+        /// <param name="request">Informações da movimentação</param>
         [Authorize]
-        [ProducesResponseType(typeof(string), 204)]
-        [ProducesResponseType(typeof(string), 400)]
-        [ProducesResponseType(typeof(string), 401)]
-        [ProducesResponseType(typeof(string), 403)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpPost("movements")]
-        public async Task<IActionResult> GetAccountMovements([FromBody] MovementAccountRequest dto)
+        public async Task<IActionResult> MovementAccount([FromBody] MovementAccountRequest request)
         {
             try
             {
                 var accountId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
                                 HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-                await _mediator.Send(new MovementAccountCommand(dto.RequestId, dto.AccountNumber, accountId, dto.Valor, dto.Tipo));
+                await _mediator.Send(new MovementAccountCommand(request.RequestId, request.AccountNumber, accountId, request.Valor, request.Tipo));
                 return NoContent();
             }
             catch (InvalidAccountException ex)
@@ -128,6 +128,10 @@ namespace BankMore.Account.Api.Controllers
             {
                 return BadRequest(new { message = ex.Message, type = "INACTIVE_ACCOUNT" });
             }
+            catch (InvalidValueException ex)
+            {
+                return BadRequest(new { message = ex.Message, type = "INVALID_VALUE" });
+            }
             catch (InvalidTypeException ex)
             {
                 return BadRequest(new { message = ex.Message, type = "INVALID_TYPE" });
@@ -135,23 +139,23 @@ namespace BankMore.Account.Api.Controllers
         }
 
         /// <summary>
-        /// Responsável por efetuar movimentações nas contas corrente
+        /// Responsável por consultar o saldo da conta
         /// </summary>
-        /// <param name="dto">Informações da movimentação</param>
+        /// <param name="request">Informações da movimentação</param>
         [Authorize]
         [ProducesResponseType(typeof(string), 200)]
         [ProducesResponseType(typeof(string), 400)]
         [ProducesResponseType(typeof(string), 401)]
         [ProducesResponseType(typeof(string), 403)]
         [HttpPost("balance")]
-        public async Task<IActionResult> GetAccountBalance([FromBody] AccountBalanceRequest dto)
+        public async Task<IActionResult> GetAccountBalance([FromBody] AccountBalanceRequest request)
         {
             try
             {
                 var accountId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
                                 HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-                var result = await _mediator.Send(new AccountBalanceQuery(new Guid(accountId), dto.NumeroConta));
+                var result = await _mediator.Send(new AccountBalanceQuery(new Guid(accountId), request.NumeroConta));
                 return Ok(result);
             }
             catch (InvalidAccountException ex)

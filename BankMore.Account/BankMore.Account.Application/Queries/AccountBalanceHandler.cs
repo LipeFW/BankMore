@@ -31,7 +31,7 @@ namespace BankMore.Account.Application.Queries
                 NumeroConta = conta.Numero,
                 Nome = conta.Nome,
                 DataConsulta = DateTime.UtcNow,
-                Saldo = saldo
+                Saldo = saldo.ToString("F2")
             };
         }
     }

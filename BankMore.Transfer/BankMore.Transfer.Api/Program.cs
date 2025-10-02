@@ -1,3 +1,18 @@
+using BankMore.Transfer.Api.Configuration;
+using BankMore.Transfer.Application.Commands;
+using BankMore.Transfer.Domain.Interfaces;
+using BankMore.Transfer.Infrastructure.Context;
+using BankMore.Transfer.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Oracle.ManagedDataAccess.Client;
+using System.Data;
+using System.Net;
+using System.Reflection;
+using System.Text;
 
 namespace BankMore.Transfer.Api
 {
@@ -12,7 +27,113 @@ namespace BankMore.Transfer.Api
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "BankMore.Account API", Version = "v1" });
+
+                var securityScheme = new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Insira o token JWT desta forma: Bearer {seu token}"
+                };
+
+                c.AddSecurityDefinition("Bearer", securityScheme);
+
+                var securityRequirement = new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            };
+
+                c.AddSecurityRequirement(securityRequirement);
+
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+            });
+
+            // Configurações de JWT
+            var jwtSettings = builder.Configuration.GetSection("Jwt");
+            builder.Services.Configure<JwtConfiguration>(jwtSettings);
+
+            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+
+            builder.Services.AddAuthentication("Bearer")
+             .AddJwtBearer("Bearer", options =>
+             {
+                 options.TokenValidationParameters = new TokenValidationParameters
+                 {
+                     ValidateIssuer = true,
+                     ValidateAudience = true,
+                     ValidateLifetime = true,
+                     ValidateIssuerSigningKey = true,
+                     ClockSkew = TimeSpan.Zero,
+                     ValidIssuer = jwtSettings["Issuer"],
+                     ValidAudience = jwtSettings["Audience"],
+                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
+                 };
+
+                 options.Events = new JwtBearerEvents
+                 {
+                     OnAuthenticationFailed = context =>
+                     {
+                         // Se a rota permitir [AllowAnonymous], não retorna 403
+                         var endpoint = context.HttpContext.GetEndpoint();
+                         var allowAnonymous = endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null;
+
+                         if (allowAnonymous)
+                         {
+                             return Task.CompletedTask;
+                         }
+
+                         if (context.Exception is SecurityTokenExpiredException)
+                         {
+                             context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                             context.Response.ContentType = "application/json";
+                             return context.Response.WriteAsync("{\"message\": \"Token expirado\"}");
+                         }
+
+                         return Task.CompletedTask;
+                     }
+                 };
+             });
+
+            builder.Services.AddDbContext<MainContext>(options =>
+            options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection"))
+        );
+
+            builder.Services.AddScoped<IDbConnection>(sp =>
+            {
+                var connectionString = builder.Configuration.GetConnectionString("OracleConnection");
+                var connection = new OracleConnection(connectionString);
+                connection.Open(); // Abre ao criar
+                return connection;
+            });
+
+            builder.Services.AddScoped<ITransferRepository, TransferRepository>();
+
+
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddHttpClient<TransferHandler>(client =>
+            {
+                client.BaseAddress = new Uri(builder.Configuration["AccountAPI:BaseAddress"]);
+            });
+
+            builder.Services.AddAuthorization();
+
 
             var app = builder.Build();
 
@@ -25,8 +146,8 @@ namespace BankMore.Transfer.Api
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
-
 
             app.MapControllers();
 

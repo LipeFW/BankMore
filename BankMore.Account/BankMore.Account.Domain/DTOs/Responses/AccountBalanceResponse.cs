@@ -5,6 +5,6 @@
         public int NumeroConta { get; set; }
         public string Nome { get; set; } = null!;
         public DateTime DataConsulta { get; set; }
-        public decimal Saldo { get; set; }
+        public string Saldo { get; set; }
     }
 }
