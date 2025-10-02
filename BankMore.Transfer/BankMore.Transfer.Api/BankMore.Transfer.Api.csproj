@@ -7,6 +7,7 @@
     <UserSecretsId>396cd889-4fea-4d24-b820-91d3498c042c</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,9 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\BankMore.Transfer\BankMore.Transfer.Infrastructure\BankMore.Transfer.Infrastructure.csproj" />
     <ProjectReference Include="..\BankMore.Transfer.Application\BankMore.Transfer.Application.csproj" />
     <ProjectReference Include="..\BankMore.Transfer.Domain\BankMore.Transfer.Domain.csproj" />
+    <ProjectReference Include="..\BankMore.Transfer.Infrastructure\BankMore.Transfer.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

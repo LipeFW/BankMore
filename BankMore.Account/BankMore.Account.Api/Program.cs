@@ -33,7 +33,7 @@ namespace BankMore.Account.Api
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "BankMore.Account API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "BankMore.Account.Api", Version = "v1" });
 
                 var securityScheme = new OpenApiSecurityScheme
                 {
@@ -175,11 +175,7 @@ namespace BankMore.Account.Api
             app.UseAuthentication();
             app.UseAuthorization();
 
-
             app.MapControllers();
-
-            //app.Urls.Add("http://0.0.0.0:80");
-            app.MapGet("/", () => "API rodando!");
 
             app.Run();
         }

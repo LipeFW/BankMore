@@ -29,7 +29,7 @@ namespace BankMore.Transfer.Api
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "BankMore.Account API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "BankMore.Transfer.Api", Version = "v1" });
 
                 var securityScheme = new OpenApiSecurityScheme
                 {
@@ -71,49 +71,48 @@ namespace BankMore.Transfer.Api
 
             var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
 
-            builder.Services.AddAuthentication("Bearer")
-             .AddJwtBearer("Bearer", options =>
-             {
-                 options.TokenValidationParameters = new TokenValidationParameters
-                 {
-                     ValidateIssuer = true,
-                     ValidateAudience = true,
-                     ValidateLifetime = true,
-                     ValidateIssuerSigningKey = true,
-                     ClockSkew = TimeSpan.Zero,
-                     ValidIssuer = jwtSettings["Issuer"],
-                     ValidAudience = jwtSettings["Audience"],
-                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
-                 };
+            builder.Services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ClockSkew = TimeSpan.Zero,
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidAudience = jwtSettings["Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
+                };
 
-                 options.Events = new JwtBearerEvents
-                 {
-                     OnAuthenticationFailed = context =>
-                     {
-                         // Se a rota permitir [AllowAnonymous], não retorna 403
-                         var endpoint = context.HttpContext.GetEndpoint();
-                         var allowAnonymous = endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null;
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        // Se a rota permitir [AllowAnonymous], não retorna 403
+                        var endpoint = context.HttpContext.GetEndpoint();
+                        var allowAnonymous = endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null;
 
-                         if (allowAnonymous)
-                         {
-                             return Task.CompletedTask;
-                         }
+                        if (allowAnonymous)
+                        {
+                            return Task.CompletedTask;
+                        }
 
-                         if (context.Exception is SecurityTokenExpiredException)
-                         {
-                             context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                             context.Response.ContentType = "application/json";
-                             return context.Response.WriteAsync("{\"message\": \"Token expirado\"}");
-                         }
+                        if (context.Exception is SecurityTokenExpiredException)
+                        {
+                            context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                            context.Response.ContentType = "application/json";
+                            return context.Response.WriteAsync("{\"message\": \"Token expirado\"}");
+                        }
 
-                         return Task.CompletedTask;
-                     }
-                 };
-             });
+                        return Task.CompletedTask;
+                    }
+                };
+            });
 
             builder.Services.AddDbContext<MainContext>(options =>
-            options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection"))
-        );
+                options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection"))
+            );
 
             builder.Services.AddScoped<IDbConnection>(sp =>
             {
@@ -134,15 +133,16 @@ namespace BankMore.Transfer.Api
 
             builder.Services.AddAuthorization();
 
-
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            using (var scope = app.Services.CreateScope())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                var db = scope.ServiceProvider.GetRequiredService<MainContext>();
+                db.Database.Migrate();
             }
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
 
