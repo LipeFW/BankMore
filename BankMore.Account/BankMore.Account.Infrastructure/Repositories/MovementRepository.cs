@@ -2,6 +2,7 @@
 using BankMore.Account.Domain.Interfaces;
 using Dapper;
 using System.Data;
+using System.Data.Common;
 using System.Security.Principal;
 
 namespace BankMore.Account.Infrastructure.Repositories
@@ -15,20 +16,30 @@ namespace BankMore.Account.Infrastructure.Repositories
             _db = db;
         }
 
-        public async Task Add(Movimento movement)
+        public async Task AddAsync(Movimento movement)
         {
-            var sql = @"
-                INSERT INTO Movimento (""IdMovimento"", ""IdContaCorrente"", ""DataMovimento"", ""TipoMovimento"", ""Valor"")
-                VALUES (:IdMovimento, :IdContaCorrente, :DataMovimento, :TipoMovimento, :Valor)";
+            var transaction = _db.BeginTransaction();
 
-            var parameters = new DynamicParameters();
-            parameters.Add("IdMovimento", movement.IdMovimento.ToString("D"));
-            parameters.Add("IdContaCorrente", movement.IdContaCorrente.ToString("D"));
-            parameters.Add("DataMovimento", movement.DataMovimento);
-            parameters.Add("TipoMovimento", movement.TipoMovimento);
-            parameters.Add("Valor", movement.Valor);
+            try
+            {
+                var sql = @"INSERT INTO Movimento (""IdMovimento"", ""IdContaCorrente"", ""DataMovimento"", ""TipoMovimento"", ""Valor"")
+                            VALUES (:IdMovimento, :IdContaCorrente, :DataMovimento, :TipoMovimento, :Valor)";
 
-            await _db.ExecuteAsync(sql, parameters);
+                var parameters = new DynamicParameters();
+                parameters.Add("IdMovimento", movement.IdMovimento.ToString("D"));
+                parameters.Add("IdContaCorrente", movement.IdContaCorrente.ToString("D"));
+                parameters.Add("DataMovimento", movement.DataMovimento);
+                parameters.Add("TipoMovimento", movement.TipoMovimento);
+                parameters.Add("Valor", movement.Valor);
+
+                await _db.ExecuteAsync(sql, parameters);
+
+                transaction.Commit();
+            }
+            catch (Exception)
+            {
+                transaction.Rollback();
+            }
         }
     }
 }

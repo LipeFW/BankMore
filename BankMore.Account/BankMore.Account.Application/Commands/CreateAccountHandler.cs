@@ -22,10 +22,10 @@ namespace BankMore.Account.Application.Commands
             if (!CpfUtils.IsValid(request.Cpf, out var formattedCpf))
                 throw new InvalidDocumentException("CPF inválido.");
 
-            var existingAccount = await _repository.GetByCpfAsync(request.Cpf);
+            var existingAccount = await _repository.GetByCpfAsync(formattedCpf);
 
             if (existingAccount != null)
-                throw new InvalidOperationException("Conta já cadastrada.");
+                throw new InvalidDocumentException("O CPF informado já possui uma conta vinculada.");
 
             (var senhaHash, var salt) = HashPassword(request.Senha);
             var numeroConta = GenerateAccountNumber();

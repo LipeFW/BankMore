@@ -23,15 +23,14 @@ namespace BankMore.Account.Api.Controllers
         }
 
         /// <summary>
-        /// Responsável pela criação de uma nova conta corrente
+        /// Endpoint responsável pela criação de uma nova conta corrente
+        /// O campo CPF pode ser informado com ou sem máscara, a aplicação faz o tratamento do mesmo.
         /// </summary>
         /// <param name="request">Informações da conta corrente a ser criada</param>
         /// <returns>O número da conta criada</returns>
         [AllowAnonymous]
         [ProducesResponseType(typeof(CreateAccountResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse),StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpPost]
         public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest request)
         {
@@ -48,42 +47,39 @@ namespace BankMore.Account.Api.Controllers
         }
 
         /// <summary>
-        /// Responsável por efetuar o login na conta corrente
+        /// Endpoint responsável por efetuar Login na conta corrente.
+        /// Em caso de login com CPF, pode ser informado com ou sem máscara, a aplicação faz o tratamento do mesmo.
         /// </summary>
-        /// <returns>O Token de autenticação (JWT).</returns>
-        /// <response code="200">Token de autenticação (JWT).</response>
-        /// <response code="401"></response>
-        /// <response code="403"></response>
-        /// <param name="request">Dados para efetuar o login. Objeto LoginAccountDto</param>
+        /// <param name="request">Dados para efetuar o login.</param>
         [AllowAnonymous]
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginAccountRequest request)
         {
             try
             {
                 var result = await _mediator.Send(new LoginAccountCommand(request.CpfOrAccountNumber, request.Senha));
-                return Ok(new { token = result });
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 return Unauthorized(new ErrorResponse(ex.Message, "USER_UNAUTHORIZED"));
-
             }
         }
 
         /// <summary>
-        /// Responsável por inativar uma conta corrente
+        /// Endpoint responsável por inativar conta corrente.
+        /// O Id da conta corrente é obtido diretamente do token da conta logada.
+        /// A senha deve ser informada para confirmar a inativação da conta.
         /// </summary>
-        /// <response code="200">Token de autenticação (JWT).</response>
         /// <param name="senha">Senha do usuário.</param>
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [HttpDelete]
         public async Task<IActionResult> Deactivate([FromBody] string senha)
         {
@@ -102,14 +98,15 @@ namespace BankMore.Account.Api.Controllers
         }
 
         /// <summary>
-        /// Responsável por efetuar movimentações nas contas corrente
+        /// Endpoint responsável por efetuar movimentações(depósitos e saques) em contas corrente.
+        /// Tipos disponíveis: "C" (crédito/depósito) | "D" (débito/saque)
         /// </summary>
         /// <param name="request">Informações da movimentação</param>
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [HttpPost("movements")]
         public async Task<IActionResult> MovementAccount([FromBody] MovementAccountRequest request)
         {
@@ -141,6 +138,11 @@ namespace BankMore.Account.Api.Controllers
                 return BadRequest(new ErrorResponse(ex.Message, "INVALID_TYPE"));
 
             }
+            catch (IdempotencyViolationException ex)
+            {
+                return BadRequest(new ErrorResponse(ex.Message, "IDEMPOTENCY_VIOLATION"));
+
+            }
         }
 
         /// <summary>
@@ -150,8 +152,8 @@ namespace BankMore.Account.Api.Controllers
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [HttpGet("balance")]
         public async Task<IActionResult> GetAccountBalance()
         {

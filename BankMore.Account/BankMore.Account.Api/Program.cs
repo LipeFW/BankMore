@@ -83,6 +83,7 @@ namespace BankMore.Account.Api
                 return connection;
             });
 
+            builder.Services.AddScoped<IIdempotencyRepository, IdempotencyRepository>();
             builder.Services.AddScoped<IAccountRepository, AccountRepository>();
             builder.Services.AddScoped<IMovementRepository, MovementRepository>();
             builder.Services.AddScoped<ITokenService, TokenService>();

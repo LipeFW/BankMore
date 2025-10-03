@@ -74,5 +74,18 @@ namespace BankMore.Account.Infrastructure.Repositories
                 sql,
                 new { IdContaCorrente = idContaCorrente });
         }
+
+        public async Task UpdateAtivoAsync(ContaCorrente account)
+        {
+            var sql = @"UPDATE ContaCorrente 
+                SET ""Ativo"" = :Ativo
+                WHERE ""IdContaCorrente"" = :IdContaCorrente";
+
+            var parameters = new DynamicParameters();
+            parameters.Add("IdContaCorrente", account.IdContaCorrente.ToString("D"));
+            parameters.Add("Ativo", account.Ativo? 1 : 0);
+
+            await _db.ExecuteAsync(sql, parameters);
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using BankMore.Transfer.Application.Commands;
 using BankMore.Transfer.Domain.DTOs.Requests;
+using BankMore.Transfer.Domain.DTOs.Responses;
 using BankMore.Transfer.Domain.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -25,10 +26,10 @@ namespace BankMore.Transfer.Api.Controllers
         /// </summary>
         /// <param name="request">Informações da transferência</param>
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)] 
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)] 
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]TransferRequest request)
         {
@@ -43,15 +44,23 @@ namespace BankMore.Transfer.Api.Controllers
             }
             catch (InvalidAccountException ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INVALID_ACCOUNT" });
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_ACCOUNT"));
+
             }
             catch (InactiveAccountException ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INACTIVE_ACCOUNT" });
+                return BadRequest(new ErrorResponse(ex.Message, "INACTIVE_ACCOUNT"));
+
             }
             catch (InvalidValueException ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INVALID_VALUE" });
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_VALUE"));
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_OPERATION"));
+
             }
         }
     }

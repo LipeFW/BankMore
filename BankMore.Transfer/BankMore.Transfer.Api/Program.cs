@@ -134,6 +134,7 @@ namespace BankMore.Transfer.Api
                 return new RestClient(builder.Configuration["AccountAPI:BaseAddress"]);
             });
 
+            builder.Services.AddScoped<IIdempotencyRepository, IdempotencyRepository>();
             builder.Services.AddScoped<ITransferRepository, TransferRepository>();
 
             builder.Services.AddMediatR(cfg =>

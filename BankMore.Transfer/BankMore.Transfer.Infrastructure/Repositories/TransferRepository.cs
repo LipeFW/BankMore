@@ -17,7 +17,7 @@ namespace BankMore.Transfer.Infrastructure.Repositories
 
         public async Task AddAsync(Transferencia transfer)
         {
-            var sql = @"INSERT INTO Transferencia (""IdTransferencia"", ""IdContaCorrenteOrigem"", ""IdContaCorrenteDestino"", ""Valor"", ""DataMovimento"")
+            var sql = @"INSERT INTO Transferencia (""IdTransferencia"", ""IdContaCorrenteOrigem"", ""IdContaCorrenteDestino"", ""Valor"", ""DataTransferencia"")
                     VALUES (:IdTransferencia, :IdContaCorrenteOrigem, :IdContaCorrenteDestino, :Valor, :DataMovimento)";
 
             var parameters = new DynamicParameters();
@@ -25,7 +25,7 @@ namespace BankMore.Transfer.Infrastructure.Repositories
             parameters.Add("IdContaCorrenteOrigem", transfer.IdContaCorrenteOrigem.ToString("D"));
             parameters.Add("IdContaCorrenteDestino", transfer.IdContaCorrenteDestino.ToString("D"));
             parameters.Add("Valor", transfer.Valor);
-            parameters.Add("DataMovimento", transfer.DataMovimento);
+            parameters.Add("DataTransferencia", transfer.DataTransferencia);
 
             await _db.ExecuteAsync(sql, parameters);
         }

@@ -1,100 +1,144 @@
-﻿using BankMore.Transfer.Domain.Entities;
+﻿using BankMore.Transfer.Domain.DTOs.Responses;
+using BankMore.Transfer.Domain.Entities;
 using BankMore.Transfer.Domain.Exceptions;
 using BankMore.Transfer.Domain.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using RestSharp;
+using System.Text.Json;
 
 namespace BankMore.Transfer.Application.Commands
 {
     public class TransferHandler : IRequestHandler<TransferCommand>
     {
-        private readonly ITransferRepository  _transferenciaRepository;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ITransferRepository _transferenciaRepository;
+        private readonly IIdempotencyRepository _idempotencyRepository;
 
-        public TransferHandler(ITransferRepository transferenciaRepository,
+        public TransferHandler(IConfiguration configuration,
             IHttpContextAccessor httpContext,
-            IConfiguration configuration)
+            ITransferRepository transferenciaRepository,
+            IIdempotencyRepository idempotencyRepository
+)
         {
-            _transferenciaRepository = transferenciaRepository;
-            _httpContextAccessor = httpContext;
             _configuration = configuration;
+            _httpContextAccessor = httpContext;
+            _transferenciaRepository = transferenciaRepository;
+            _idempotencyRepository = idempotencyRepository;
         }
 
         public async Task Handle(TransferCommand command, CancellationToken cancellationToken)
         {
-            if(command.Valor <= 0)
+            var transferExists = await _idempotencyRepository.GetByRequestIdAsync(command.IdRequisicao);
+
+            if (transferExists != null)
+            {
+                throw new IdempotencyViolationException(command.IdRequisicao.ToString("d"));
+            }
+
+            if (command.Valor <= 0)
                 throw new InvalidValueException("Apenas valores positivos podem ser recebidos.");
 
             var token = _httpContextAccessor.HttpContext.Request.Headers["Authorization"].ToString();
 
             var httpClient = new RestClient(_configuration["AccountAPI:BaseAddress"]);
-            
+
             if (!string.IsNullOrEmpty(token))
                 httpClient.AddDefaultHeader("Authorization", token);
 
             Guid destinationAccountId = Guid.Empty;
 
+            // Débito conta de origem
             if (int.TryParse(_httpContextAccessor.HttpContext.User.FindFirst("AccountNumber")?.Value, out var sourceAccountNumber))
             {
-                var requestDebito = new RestRequest("api/accounts/movements", Method.Post).AddJsonBody(new
+                var debitRequest = new RestRequest("api/accounts/movements", Method.Post).AddJsonBody(new
                 {
-                    requestId = command.IdRequisicao,
+                    requestId = Guid.NewGuid(),
                     accountNumber = sourceAccountNumber,
                     valor = command.Valor,
                     tipo = "D"
                 });
 
-                var response = await httpClient.ExecuteAsync(requestDebito);
+                var debitResponse = await httpClient.ExecuteAsync(debitRequest);
 
-                if (!response.IsSuccessStatusCode)
-                    throw new InvalidOperationException("Falha ao debitar da conta de origem");
+                if (!debitResponse.IsSuccessStatusCode)
+                {
+                    var errorResponse = debitResponse.Content != null
+                        ? JsonSerializer.Deserialize<ErrorResponse>(debitResponse.Content)
+                        : null;
+
+                    switch (errorResponse.ErrorType)
+                    {
+                        case "INVALID_ACCOUNT":
+                            throw new InvalidAccountException(errorResponse.Message);
+                        case "INACTIVE_ACCOUNT":
+                            throw new InactiveAccountException(errorResponse.Message);
+                        default:
+                            throw new InvalidOperationException("Falha ao debitar da conta de origem");
+                    }
+                }
             }
 
-            // Crédito conta destino
-            var requestCredito = new RestRequest("api/accounts/movements", Method.Post).AddJsonBody(new
+            // Crédito conta de destino
+            var creditRequest = new RestRequest("api/accounts/movements", Method.Post).AddJsonBody(new
             {
-                requestId = command.IdRequisicao,
+                requestId = Guid.NewGuid(),
                 accountNumber = command.NumeroContaDestino,
                 valor = command.Valor,
                 tipo = "C"
             });
 
-            var creditoResponse = await httpClient.ExecuteAsync(requestCredito);
+            var creditResponse = await httpClient.ExecuteAsync(creditRequest);
 
             // Se não tiver sucesso no crédito de destino, efetua o estorno (crédito na conta origem)
-            if (!creditoResponse.IsSuccessStatusCode)
+            if (!creditResponse.IsSuccessStatusCode)
             {
-                var requestCreditoOrigem = new RestRequest("api/accounts/movements", Method.Post).AddJsonBody(new
+                var sourceCreditRequest = new RestRequest("api/accounts/movements", Method.Post).AddJsonBody(new
                 {
-                    requestId = command.IdRequisicao,
+                    requestId = Guid.NewGuid(),
                     accountNumber = sourceAccountNumber,
                     valor = command.Valor,
                     tipo = "C"
                 });
 
-                await httpClient.ExecuteAsync(requestCreditoOrigem);
+                var sourceCreditResponse = await httpClient.ExecuteAsync(sourceCreditRequest);
 
-                throw new InvalidOperationException("Falha ao creditar conta destino");
+                var errorResponse = creditResponse.Content != null
+                    ? JsonSerializer.Deserialize<ErrorResponse>(creditResponse.Content)
+                    : null;
+
+                switch (errorResponse.ErrorType)
+                {
+                    case "INVALID_ACCOUNT":
+                        throw new InvalidAccountException(errorResponse.Message);
+                    case "INACTIVE_ACCOUNT":
+                        throw new InactiveAccountException(errorResponse.Message);
+                    default:
+                        throw new InvalidOperationException("Falha ao creditar conta destino");
+
+                }
             }
 
-            destinationAccountId = creditoResponse?.Headers?.FirstOrDefault(h => h.Name == "AccountId")?.Value != null
-                  ? Guid.Parse(creditoResponse.Headers.First(h => h.Name == "AccountId").Value)
+            destinationAccountId = creditResponse?.Headers?.FirstOrDefault(h => h.Name == "AccountId")?.Value != null
+                  ? Guid.Parse(creditResponse.Headers.First(h => h.Name == "AccountId").Value)
                   : throw new InvalidOperationException("Falha ao obter ID da conta corrente de origem");
 
             // Persistir transferência
             var transferencia = new Transferencia
             {
                 IdTransferencia = Guid.NewGuid(),
-                IdContaCorrenteOrigem = command.ContaOrigemId,
+                IdContaCorrenteOrigem = command.IdContaOrigem,
                 IdContaCorrenteDestino = destinationAccountId,
                 Valor = command.Valor,
-                DataMovimento = DateTime.UtcNow
+                DataTransferencia = DateTime.UtcNow
             };
 
             await _transferenciaRepository.AddAsync(transferencia);
+
+            await _idempotencyRepository.AddAsync(new Idempotencia(command.IdRequisicao, JsonSerializer.Serialize(command), JsonSerializer.Serialize(transferencia)));
+
         }
     }
 }

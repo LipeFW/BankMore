@@ -43,7 +43,7 @@ namespace BankMore.Transfer.Infrastructure.Context
                   .HasColumnType("NVARCHAR2(37)")
                   .IsRequired();
 
-                entity.Property(e => e.DataMovimento)
+                entity.Property(e => e.DataTransferencia)
                       .IsRequired();
 
                 entity.Property(e => e.Valor)

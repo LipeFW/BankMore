@@ -8,11 +8,12 @@
         public string TipoMovimento { get; set; }
         public decimal Valor { get; set; }
 
+        public ContaCorrente ContaCorrente { get; set; }
+
         public Movimento()
         {
 
         }
-
 
         public Movimento(Guid idContaCorrente, string tipoMovimento, decimal valor)
         {
@@ -22,7 +23,5 @@
             TipoMovimento = tipoMovimento;
             Valor = valor;
         }
-
-        public ContaCorrente ContaCorrente { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 using BankMore.Account.Domain.Interfaces;
 using MediatR;
 using System.Text;
+using BCryptHelper = BCrypt.Net.BCrypt;
 
 namespace BankMore.Account.Application.Commands
 {
@@ -21,12 +22,12 @@ namespace BankMore.Account.Application.Commands
             if (account is null)
                 throw new InvalidAccountException("A conta informada não existe.");
 
-            var loginHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(request.Senha));
-
-            if (Comparer<string>.Default.Compare(account.Senha, loginHash) != 0)
-                throw new Exception("Senha inválida.");
+            if (account == null || !BCryptHelper.Verify(request.Senha, account.Senha))
+                throw new Exception("Usuário e/ou senha inválidos.");
 
             account.Deactivate();
+
+            await _repository.UpdateAtivoAsync(account);
         }
     }
 }
