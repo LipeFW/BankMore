@@ -2,7 +2,7 @@
 using BankMore.Account.Domain.Exceptions;
 using BankMore.Account.Domain.Interfaces;
 using MediatR;
-using static System.Net.Mime.MediaTypeNames;
+using Microsoft.AspNetCore.Http;
 
 namespace BankMore.Account.Application.Commands
 {
@@ -10,12 +10,15 @@ namespace BankMore.Account.Application.Commands
     {
         private readonly IAccountRepository _accountRepository;
         private readonly IMovementRepository _movementRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public MovementAccountHandler(IAccountRepository accountRepository,
-            IMovementRepository movementRepository)
+            IMovementRepository movementRepository,
+            IHttpContextAccessor httpContextAccessor)
         {
             _accountRepository = accountRepository;
             _movementRepository = movementRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task Handle(MovementAccountCommand request, CancellationToken cancellationToken)
@@ -39,15 +42,11 @@ namespace BankMore.Account.Application.Commands
             if (request.AccountNumber != null && request.AccountId != account.IdContaCorrente.ToString() && request.Tipo == "D")
                 throw new InvalidTypeException("Apenas 'crédito' é permitido em conta diferente.");
 
-            var movimento = new Movimento
-            {
-                IdContaCorrente = account.IdContaCorrente,
-                DataMovimento = DateTime.UtcNow,
-                TipoMovimento = request.Tipo,
-                Valor = request.Valor
-            };
+            var movimento = new Movimento(account.IdContaCorrente, request.Tipo, request.Valor);
 
             await _movementRepository.Add(movimento);
+
+            _httpContextAccessor.HttpContext.Response.Headers.Append("AccountId", account.IdContaCorrente.ToString());
 
             return;
         }

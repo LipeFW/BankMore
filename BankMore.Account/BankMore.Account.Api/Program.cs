@@ -69,26 +69,7 @@ namespace BankMore.Account.Api
                 c.IncludeXmlComments(xmlPath);
             });
 
-            SqlMapper.AddTypeHandler(new GuidTypeHandler());
-
-            // Utiliza SQLite
-
-            //var dbPath = Environment.GetEnvironmentVariable("SQLITE_DB_PATH")
-            //             ?? Path.Combine(AppContext.BaseDirectory, "data", "app.db");
-
-            ////Garante que o diretório existe
-            //Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
-
-            //builder.Services.AddDbContext<MainContext>(options =>
-            //    options.UseSqlite($"Data Source={dbPath}"));
-
-            //builder.Services.AddScoped<IDbConnection>(sp =>
-            //{
-            //    var context = new SQLiteContext($"Data Source={dbPath}");
-            //    return context.CreateConnection();
-            //});
-
-            //Utiliza Banco Oracle
+            SqlMapper.AddTypeHandler<Guid>(new GuidTypeHandler());
 
             builder.Services.AddDbContext<MainContext>(options =>
                 options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection"))
@@ -156,6 +137,8 @@ namespace BankMore.Account.Api
                      }
                  };
              });
+
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddAuthorization();
 

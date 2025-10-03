@@ -1,4 +1,5 @@
-﻿using BankMore.Account.Domain.Interfaces;
+﻿using BankMore.Account.Domain.Entities;
+using BankMore.Account.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,13 +17,14 @@ namespace BankMore.Account.Application.Services
             _configuration = configuration;
         }
 
-        public string GenerateToken(string accountId)
+        public string GenerateToken(ContaCorrente account)
         {
             var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, accountId),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Sub, account.IdContaCorrente.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim("AccountNumber", account.Numero.ToString())
             };
 
             var token = new JwtSecurityToken(

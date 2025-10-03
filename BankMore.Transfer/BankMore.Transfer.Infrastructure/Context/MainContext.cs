@@ -18,7 +18,7 @@ namespace BankMore.Transfer.Infrastructure.Context
             // ContaCorrente
             modelBuilder.Entity<Transferencia>(entity =>
             {
-                entity.ToTable("CONTACORRENTE");
+                entity.ToTable("TRANSFERENCIA");
 
                 entity.HasKey(e => e.IdTransferencia);
 
@@ -46,8 +46,9 @@ namespace BankMore.Transfer.Infrastructure.Context
                 entity.Property(e => e.DataMovimento)
                       .IsRequired();
 
-                entity.HasIndex(e => e.Valor)
-                      .IsUnique();
+                entity.Property(e => e.Valor)
+                          .HasColumnType("NUMBER(12,2)")
+                          .IsRequired();
             });
 
             base.OnModelCreating(modelBuilder);

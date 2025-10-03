@@ -3,12 +3,16 @@ using BankMore.Transfer.Application.Commands;
 using BankMore.Transfer.Domain.Interfaces;
 using BankMore.Transfer.Infrastructure.Context;
 using BankMore.Transfer.Infrastructure.Repositories;
+using BankMore.Transfer.Infrastructure.Utils;
+using Dapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Oracle.ManagedDataAccess.Client;
+using RestSharp;
 using System.Data;
 using System.Net;
 using System.Reflection;
@@ -110,6 +114,9 @@ namespace BankMore.Transfer.Api
                 };
             });
 
+            SqlMapper.AddTypeHandler<Guid>(new GuidTypeHandler());
+
+
             builder.Services.AddDbContext<MainContext>(options =>
                 options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection"))
             );
@@ -122,14 +129,19 @@ namespace BankMore.Transfer.Api
                 return connection;
             });
 
+            builder.Services.AddSingleton<RestClient>(sp =>
+            {
+                return new RestClient(builder.Configuration["AccountAPI:BaseAddress"]);
+            });
+
             builder.Services.AddScoped<ITransferRepository, TransferRepository>();
 
+            builder.Services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(typeof(TransferCommand).Assembly);
+            });
 
             builder.Services.AddHttpContextAccessor();
-            builder.Services.AddHttpClient<TransferHandler>(client =>
-            {
-                client.BaseAddress = new Uri(builder.Configuration["AccountAPI:BaseAddress"]);
-            });
 
             builder.Services.AddAuthorization();
 

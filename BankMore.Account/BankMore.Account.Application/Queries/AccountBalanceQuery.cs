@@ -8,10 +8,9 @@ namespace BankMore.Account.Application.Queries
         public Guid AccountIdFromToken { get; }
         public int? NumeroConta { get; } 
 
-        public AccountBalanceQuery(Guid accountIdFromToken, int? numeroConta = null)
+        public AccountBalanceQuery(Guid accountIdFromToken)
         {
             AccountIdFromToken = accountIdFromToken;
-            NumeroConta = numeroConta;
         }
     }
 }

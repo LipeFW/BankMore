@@ -8,6 +8,21 @@
         public string TipoMovimento { get; set; }
         public decimal Valor { get; set; }
 
+        public Movimento()
+        {
+
+        }
+
+
+        public Movimento(Guid idContaCorrente, string tipoMovimento, decimal valor)
+        {
+            IdMovimento = Guid.NewGuid();
+            IdContaCorrente = idContaCorrente;
+            DataMovimento = DateTime.UtcNow;
+            TipoMovimento = tipoMovimento;
+            Valor = valor;
+        }
+
         public ContaCorrente ContaCorrente { get; set; }
     }
 }

@@ -230,8 +230,7 @@ POST /api/accounts/login
 Resposta:
 
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR...",
-  "expiraEm": "2025-09-28T12:00:00Z"
+  "token": "eyJhbGciOiJIUzI1NiIsInR..."
 }
 
 Transferência

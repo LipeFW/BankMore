@@ -16,7 +16,7 @@ namespace BankMore.Account.Domain.Entities
 
         public ContaCorrente()
         {
-
+                
         }
 
         public ContaCorrente(string cpf, string nome, string senha, int numero, string salt )

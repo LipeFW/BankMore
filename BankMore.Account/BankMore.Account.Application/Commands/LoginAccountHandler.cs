@@ -37,7 +37,7 @@ namespace BankMore.Account.Application.Commands
             if (account == null || !BCryptHelper.Verify(request.Senha, account.Senha))
                 throw new Exception("Usuário e/ou senha inválidos.");
 
-            return _jwtService.GenerateToken(account.IdContaCorrente.ToString());
+            return _jwtService.GenerateToken(account);
         }
     }
 }

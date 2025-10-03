@@ -139,23 +139,28 @@ namespace BankMore.Account.Api.Controllers
         }
 
         /// <summary>
-        /// Responsável por consultar o saldo da conta
+        /// Responsável por consultar o saldo da conta.
+        /// A consulta de saldo é efetuada pelo ID da conta logada.
         /// </summary>
-        /// <param name="request">Informações da movimentação</param>
         [Authorize]
         [ProducesResponseType(typeof(string), 200)]
         [ProducesResponseType(typeof(string), 400)]
         [ProducesResponseType(typeof(string), 401)]
         [ProducesResponseType(typeof(string), 403)]
-        [HttpPost("balance")]
-        public async Task<IActionResult> GetAccountBalance([FromBody] AccountBalanceRequest request)
+        [HttpGet("balance")]
+        public async Task<IActionResult> GetAccountBalance()
         {
             try
             {
                 var accountId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
                                 HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-                var result = await _mediator.Send(new AccountBalanceQuery(new Guid(accountId), request.NumeroConta));
+                if (accountId == null)
+                {
+                    throw new InvalidAccountException("Houve um problema ao verificar o saldo da conta. Por favor tente novamente.");
+                }
+
+                var result = await _mediator.Send(new AccountBalanceQuery(new Guid(accountId)));
                 return Ok(result);
             }
             catch (InvalidAccountException ex)
