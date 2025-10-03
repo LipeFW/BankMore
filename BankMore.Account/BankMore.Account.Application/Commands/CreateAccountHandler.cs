@@ -1,4 +1,5 @@
-﻿using BankMore.Account.Domain.Entities;
+﻿using BankMore.Account.Domain.DTOs.Responses;
+using BankMore.Account.Domain.Entities;
 using BankMore.Account.Domain.Exceptions;
 using BankMore.Account.Domain.Interfaces;
 using BankMore.Account.Domain.Utils;
@@ -7,7 +8,7 @@ using BCryptHelper = BCrypt.Net.BCrypt;
 
 namespace BankMore.Account.Application.Commands
 {
-    public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, int>
+    public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, CreateAccountResponse>
     {
         private readonly IAccountRepository _repository;
 
@@ -16,7 +17,7 @@ namespace BankMore.Account.Application.Commands
             _repository = repository;
         }
 
-        public async Task<int> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
+        public async Task<CreateAccountResponse> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
         {
             if (!CpfUtils.IsValid(request.Cpf, out var formattedCpf))
                 throw new InvalidDocumentException("CPF inválido.");
@@ -31,7 +32,11 @@ namespace BankMore.Account.Application.Commands
             var newAccount = new ContaCorrente(formattedCpf, request.Nome, senhaHash, numeroConta, salt);
 
             await _repository.AddAsync(newAccount);
-            return numeroConta;
+
+            return new CreateAccountResponse
+            {
+                NumeroConta = newAccount.Numero
+            };
         }
         private (string senhaHash, string salt) HashPassword(string senha)
         {

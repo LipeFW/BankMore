@@ -29,7 +29,7 @@ namespace BankMore.Account.Api.Controllers
         /// <returns>O número da conta criada</returns>
         [AllowAnonymous]
         [ProducesResponseType(typeof(CreateAccountResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse),StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpPost]
@@ -39,11 +39,11 @@ namespace BankMore.Account.Api.Controllers
             {
                 var result = await _mediator.Send(new CreateAccountCommand(request.Cpf, request.Nome, request.Senha));
 
-                return Ok(new { numeroConta = result });
+                return Ok(result);
             }
             catch (InvalidDocumentException ex)
             {
-                return BadRequest(new { message = ex.Message, errorType = "INVALID_DOCUMENT" });
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_DOCUMENT"));
             }
         }
 
@@ -56,9 +56,9 @@ namespace BankMore.Account.Api.Controllers
         /// <response code="403"></response>
         /// <param name="request">Dados para efetuar o login. Objeto LoginAccountDto</param>
         [AllowAnonymous]
-        [ProducesResponseType(typeof(string), 200)]
-        [ProducesResponseType(typeof(string), 401)]
-        [ProducesResponseType(typeof(string), 403)]
+        [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginAccountRequest request)
         {
@@ -69,7 +69,8 @@ namespace BankMore.Account.Api.Controllers
             }
             catch (Exception ex)
             {
-                return Unauthorized(new { message = ex.Message, type = "USER_UNAUTHORIZED" });
+                return Unauthorized(new ErrorResponse(ex.Message, "USER_UNAUTHORIZED"));
+
             }
         }
 
@@ -79,10 +80,10 @@ namespace BankMore.Account.Api.Controllers
         /// <response code="200">Token de autenticação (JWT).</response>
         /// <param name="senha">Senha do usuário.</param>
         [Authorize]
-        [ProducesResponseType(typeof(string), 204)]
-        [ProducesResponseType(typeof(string), 400)]
-        [ProducesResponseType(typeof(string), 401)]
-        [ProducesResponseType(typeof(string), 403)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpDelete]
         public async Task<IActionResult> Deactivate([FromBody] string senha)
         {
@@ -96,7 +97,7 @@ namespace BankMore.Account.Api.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INVALID_ACCOUNT" });
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_ACCOUNT"));
             }
         }
 
@@ -122,19 +123,23 @@ namespace BankMore.Account.Api.Controllers
             }
             catch (InvalidAccountException ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INVALID_ACCOUNT" });
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_ACCOUNT"));
+
             }
             catch (InactiveAccountException ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INACTIVE_ACCOUNT" });
+                return BadRequest(new ErrorResponse(ex.Message, "INACTIVE_ACCOUNT"));
+
             }
             catch (InvalidValueException ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INVALID_VALUE" });
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_VALUE"));
+
             }
             catch (InvalidTypeException ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INVALID_TYPE" });
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_TYPE"));
+
             }
         }
 
@@ -143,10 +148,10 @@ namespace BankMore.Account.Api.Controllers
         /// A consulta de saldo é efetuada pelo ID da conta logada.
         /// </summary>
         [Authorize]
-        [ProducesResponseType(typeof(string), 200)]
-        [ProducesResponseType(typeof(string), 400)]
-        [ProducesResponseType(typeof(string), 401)]
-        [ProducesResponseType(typeof(string), 403)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpGet("balance")]
         public async Task<IActionResult> GetAccountBalance()
         {
@@ -155,25 +160,24 @@ namespace BankMore.Account.Api.Controllers
                 var accountId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
                                 HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-                if (accountId == null)
-                {
-                    throw new InvalidAccountException("Houve um problema ao verificar o saldo da conta. Por favor tente novamente.");
-                }
-
                 var result = await _mediator.Send(new AccountBalanceQuery(new Guid(accountId)));
+
                 return Ok(result);
             }
             catch (InvalidAccountException ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INVALID_ACCOUNT" });
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_ACCOUNT"));
+
             }
             catch (InactiveAccountException ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INACTIVE_ACCOUNT" });
+                return BadRequest(new ErrorResponse(ex.Message, "INACTIVE_ACCOUNT"));
+
             }
             catch (InvalidTypeException ex)
             {
-                return BadRequest(new { message = ex.Message, type = "INVALID_TYPE" });
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_TYPE"));
+
             }
         }
     }

@@ -2,6 +2,6 @@
 { 
     public class CreateAccountResponse
     {
-        public string NumeroConta { get; set; }
+        public int NumeroConta { get; set; }
     }
 }
