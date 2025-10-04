@@ -1,4 +1,5 @@
-﻿using BankMore.Transfer.Domain.DTOs.Responses;
+﻿using BankMore.Transfer.Domain.DTOs.Requests;
+using BankMore.Transfer.Domain.DTOs.Responses;
 using BankMore.Transfer.Domain.Entities;
 using BankMore.Transfer.Domain.Exceptions;
 using BankMore.Transfer.Domain.Interfaces;
@@ -53,13 +54,8 @@ namespace BankMore.Transfer.Application.Commands
             // Débito conta de origem
             if (int.TryParse(_httpContextAccessor.HttpContext.User.FindFirst("AccountNumber")?.Value, out var sourceAccountNumber))
             {
-                var debitRequest = new RestRequest("api/accounts/movements", Method.Post).AddJsonBody(new
-                {
-                    requestId = Guid.NewGuid(),
-                    accountNumber = sourceAccountNumber,
-                    valor = command.Valor,
-                    tipo = "D"
-                });
+                var debitRequest = new RestRequest("api/accounts/movements", Method.Post)
+                    .AddJsonBody(new MovementAccountRequest(Guid.NewGuid(), sourceAccountNumber, command.Valor, "D"));
 
                 var debitResponse = await httpClient.ExecuteAsync(debitRequest);
 
@@ -72,9 +68,9 @@ namespace BankMore.Transfer.Application.Commands
                     switch (errorResponse.ErrorType)
                     {
                         case "INVALID_ACCOUNT":
-                            throw new InvalidAccountException(errorResponse.Message);
+                            throw new InvalidAccountException($"Houve um problema ao debitar da conta de origem. {errorResponse.Message}");
                         case "INACTIVE_ACCOUNT":
-                            throw new InactiveAccountException(errorResponse.Message);
+                            throw new InactiveAccountException($"Houve um problema ao debitar da conta de origem. {errorResponse.Message}");
                         default:
                             throw new InvalidOperationException("Falha ao debitar da conta de origem");
                     }
@@ -82,42 +78,34 @@ namespace BankMore.Transfer.Application.Commands
             }
 
             // Crédito conta de destino
-            var creditRequest = new RestRequest("api/accounts/movements", Method.Post).AddJsonBody(new
-            {
-                requestId = Guid.NewGuid(),
-                accountNumber = command.NumeroContaDestino,
-                valor = command.Valor,
-                tipo = "C"
-            });
+            var creditRequest = new RestRequest("api/accounts/movements", Method.Post)
+                .AddJsonBody(new MovementAccountRequest(Guid.NewGuid(), command.NumeroContaDestino, command.Valor, "C"));
 
             var creditResponse = await httpClient.ExecuteAsync(creditRequest);
 
             // Se não tiver sucesso no crédito de destino, efetua o estorno (crédito na conta origem)
             if (!creditResponse.IsSuccessStatusCode)
             {
-                var sourceCreditRequest = new RestRequest("api/accounts/movements", Method.Post).AddJsonBody(new
-                {
-                    requestId = Guid.NewGuid(),
-                    accountNumber = sourceAccountNumber,
-                    valor = command.Valor,
-                    tipo = "C"
-                });
+                var sourceCreditRequest = new RestRequest("api/accounts/movements", Method.Post)
+                    .AddJsonBody(new MovementAccountRequest(Guid.NewGuid(), sourceAccountNumber, command.Valor, "C"));
 
                 var sourceCreditResponse = await httpClient.ExecuteAsync(sourceCreditRequest);
 
-                var errorResponse = creditResponse.Content != null
-                    ? JsonSerializer.Deserialize<ErrorResponse>(creditResponse.Content)
+                var creditResponseDetails = creditResponse.Content != null
+                    ? JsonSerializer.Deserialize<ErrorResponse>(creditResponse.Content, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    })
                     : null;
 
-                switch (errorResponse.ErrorType)
+                switch (creditResponseDetails?.ErrorType)
                 {
                     case "INVALID_ACCOUNT":
-                        throw new InvalidAccountException(errorResponse.Message);
+                        throw new InvalidAccountException($"Houve um problema ao creditar a conta de destino. {creditResponseDetails.Message}");
                     case "INACTIVE_ACCOUNT":
-                        throw new InactiveAccountException(errorResponse.Message);
+                        throw new InactiveAccountException($"Houve um problema ao creditar a conta de destino. {creditResponseDetails.Message}");
                     default:
                         throw new InvalidOperationException("Falha ao creditar conta destino");
-
                 }
             }
 
@@ -126,7 +114,7 @@ namespace BankMore.Transfer.Application.Commands
                   : throw new InvalidOperationException("Falha ao obter ID da conta corrente de origem");
 
             // Persistir transferência
-            var transferencia = new Transferencia
+            var transfer = new Transferencia
             {
                 IdTransferencia = Guid.NewGuid(),
                 IdContaCorrenteOrigem = command.IdContaOrigem,
@@ -135,9 +123,9 @@ namespace BankMore.Transfer.Application.Commands
                 DataTransferencia = DateTime.UtcNow
             };
 
-            await _transferenciaRepository.AddAsync(transferencia);
+            await _transferenciaRepository.AddAsync(transfer);
 
-            await _idempotencyRepository.AddAsync(new Idempotencia(command.IdRequisicao, JsonSerializer.Serialize(command), JsonSerializer.Serialize(transferencia)));
+            await _idempotencyRepository.AddAsync(new Idempotencia(command.IdRequisicao, JsonSerializer.Serialize(command), JsonSerializer.Serialize(transfer)));
 
         }
     }

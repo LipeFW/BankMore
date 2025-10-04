@@ -2,7 +2,7 @@
 {
     public class LoginAccountRequest
     {
-        public string CpfOrAccountNumber { get; set; }
+        public string CpfOuNumeroConta { get; set; }
         public string Senha { get; set; }
     }
 }

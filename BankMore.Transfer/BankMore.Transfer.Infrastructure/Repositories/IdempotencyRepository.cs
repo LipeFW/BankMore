@@ -21,7 +21,7 @@ namespace BankMore.Transfer.Infrastructure.Repositories
                 VALUES (:Chave_Idempotencia, :Requisicao, :Resultado)";
 
             var parameters = new DynamicParameters();
-            parameters.Add("Chave_Idempotencia", idempotency.ChaveIdempotencia);
+            parameters.Add("Chave_Idempotencia", idempotency.ChaveIdempotencia.ToString("D"));
             parameters.Add("Requisicao", idempotency.Requisicao);
             parameters.Add("Resultado", idempotency.Resultado);
 

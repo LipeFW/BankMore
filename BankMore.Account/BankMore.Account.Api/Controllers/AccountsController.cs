@@ -60,7 +60,7 @@ namespace BankMore.Account.Api.Controllers
         {
             try
             {
-                var result = await _mediator.Send(new LoginAccountCommand(request.CpfOrAccountNumber, request.Senha));
+                var result = await _mediator.Send(new LoginAccountCommand(request.CpfOuNumeroConta, request.Senha));
                 return Ok(result);
             }
             catch (Exception ex)
@@ -115,7 +115,7 @@ namespace BankMore.Account.Api.Controllers
                 var accountId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
                                 HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-                await _mediator.Send(new MovementAccountCommand(request.RequestId, request.AccountNumber, accountId, request.Valor, request.Tipo));
+                await _mediator.Send(new MovementAccountCommand(request.IdRequisicao, request.NumeroConta, accountId, request.Valor, request.Tipo));
                 return NoContent();
             }
             catch (InvalidAccountException ex)

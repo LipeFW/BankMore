@@ -1,4 +1,4 @@
-﻿namespace BankMore.Account.Domain.DTOs.Requests
+﻿namespace BankMore.Transfer.Domain.DTOs.Requests
 {
     public class MovementAccountRequest
     {
@@ -7,6 +7,7 @@
         public decimal Valor { get; set; }
 
         private string _tipo;
+
         public string Tipo
         {
             get => _tipo;
@@ -17,6 +18,14 @@
                 else
                     _tipo = string.Empty;
             }
+        }
+
+        public MovementAccountRequest(Guid idRequisicao, int numeroConta, decimal valor, string tipo)
+        {
+            IdRequisicao = idRequisicao;
+            NumeroConta = numeroConta;
+            Valor = valor;
+            Tipo = tipo;
         }
     }
 }
