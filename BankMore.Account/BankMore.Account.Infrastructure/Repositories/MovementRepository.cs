@@ -2,8 +2,6 @@
 using BankMore.Account.Domain.Interfaces;
 using Dapper;
 using System.Data;
-using System.Data.Common;
-using System.Security.Principal;
 
 namespace BankMore.Account.Infrastructure.Repositories
 {
@@ -40,6 +38,15 @@ namespace BankMore.Account.Infrastructure.Repositories
             {
                 transaction.Rollback();
             }
+        }
+
+        public async Task<Movimento> GetByIdAsync(string id)
+        {
+            var sql = @"SELECT ""IdMovimento"", ""IdContaCorrente"", ""DataMovimento"", ""TipoMovimento"", ""Valor""
+                        FROM Movimento
+                        WHERE ""IdMovimento"" = :id";
+
+            return await _db.QuerySingleOrDefaultAsync<Movimento>(sql, new { id });
         }
     }
 }

@@ -44,9 +44,14 @@
 
             digito += resto.ToString();
 
-            formattedCpf = cpf;
 
-            return cpf.EndsWith(digito);
+            if (cpf.EndsWith(digito))
+            {
+                formattedCpf = cpf;
+                return true;
+            }
+            else
+                return false;
         }
     }
 }

@@ -22,6 +22,50 @@ namespace BankMore.Account.Api.Controllers
             _mediator = mediator;
         }
 
+        #region GET
+
+        /// <summary>
+        /// Responsável por consultar o saldo da conta.
+        /// A consulta de saldo é efetuada pelo ID da conta logada.
+        /// </summary>
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [HttpGet("balance")]
+        public async Task<IActionResult> GetAccountBalance()
+        {
+            try
+            {
+                var accountId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                                HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+                var result = await _mediator.Send(new AccountBalanceQuery(new Guid(accountId)));
+
+                return Ok(result);
+            }
+            catch (InvalidAccountException ex)
+            {
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_ACCOUNT"));
+
+            }
+            catch (InactiveAccountException ex)
+            {
+                return BadRequest(new ErrorResponse(ex.Message, "INACTIVE_ACCOUNT"));
+
+            }
+            catch (InvalidTypeException ex)
+            {
+                return BadRequest(new ErrorResponse(ex.Message, "INVALID_TYPE"));
+
+            }
+        }
+
+        #endregion GET
+
+        #region POST
+
         /// <summary>
         /// Endpoint responsável pela criação de uma nova conta corrente
         /// O campo CPF pode ser informado com ou sem máscara, a aplicação faz o tratamento do mesmo.
@@ -30,7 +74,7 @@ namespace BankMore.Account.Api.Controllers
         /// <returns>O número da conta criada</returns>
         [AllowAnonymous]
         [ProducesResponseType(typeof(CreateAccountResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ErrorResponse),StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         [HttpPost]
         public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest request)
         {
@@ -66,34 +110,6 @@ namespace BankMore.Account.Api.Controllers
             catch (Exception ex)
             {
                 return Unauthorized(new ErrorResponse(ex.Message, "USER_UNAUTHORIZED"));
-            }
-        }
-
-        /// <summary>
-        /// Endpoint responsável por inativar conta corrente.
-        /// O Id da conta corrente é obtido diretamente do token da conta logada.
-        /// A senha deve ser informada para confirmar a inativação da conta.
-        /// </summary>
-        /// <param name="senha">Senha do usuário.</param>
-        [Authorize]
-        [ProducesResponseType(typeof(void), StatusCodes.Status204NoContent)]
-        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
-        [HttpDelete]
-        public async Task<IActionResult> Deactivate([FromBody] string senha)
-        {
-            var accountId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-
-            try
-            {
-                await _mediator.Send(new DeactivateAccountCommand(accountId, senha));
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new ErrorResponse(ex.Message, "INVALID_ACCOUNT"));
             }
         }
 
@@ -145,42 +161,38 @@ namespace BankMore.Account.Api.Controllers
             }
         }
 
+        #endregion POST
+
+        #region DELETE
+
         /// <summary>
-        /// Responsável por consultar o saldo da conta.
-        /// A consulta de saldo é efetuada pelo ID da conta logada.
+        /// Endpoint responsável por inativar conta corrente.
+        /// O Id da conta corrente é obtido diretamente do token da conta logada.
+        /// A senha deve ser informada para confirmar a inativação da conta.
         /// </summary>
+        /// <param name="senha">Senha do usuário.</param>
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
-        [HttpGet("balance")]
-        public async Task<IActionResult> GetAccountBalance()
+        [HttpDelete]
+        public async Task<IActionResult> Deactivate([FromBody] string senha)
         {
+            var accountId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
             try
             {
-                var accountId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                                HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-
-                var result = await _mediator.Send(new AccountBalanceQuery(new Guid(accountId)));
-
-                return Ok(result);
+                await _mediator.Send(new DeactivateAccountCommand(accountId, senha));
+                return NoContent();
             }
-            catch (InvalidAccountException ex)
+            catch (Exception ex)
             {
                 return BadRequest(new ErrorResponse(ex.Message, "INVALID_ACCOUNT"));
-
-            }
-            catch (InactiveAccountException ex)
-            {
-                return BadRequest(new ErrorResponse(ex.Message, "INACTIVE_ACCOUNT"));
-
-            }
-            catch (InvalidTypeException ex)
-            {
-                return BadRequest(new ErrorResponse(ex.Message, "INVALID_TYPE"));
-
             }
         }
+
+        #endregion DELETE
     }
 }

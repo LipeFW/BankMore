@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using RestSharp;
 using System.Text.Json;
+using System.Windows.Input;
 
 namespace BankMore.Transfer.Application.Commands
 {
@@ -65,7 +66,7 @@ namespace BankMore.Transfer.Application.Commands
                         ? JsonSerializer.Deserialize<ErrorResponse>(debitResponse.Content)
                         : null;
 
-                    switch (errorResponse.ErrorType)
+                    switch (errorResponse?.ErrorType)
                     {
                         case "INVALID_ACCOUNT":
                             throw new InvalidAccountException($"Houve um problema ao debitar da conta de origem. {errorResponse.Message}");
@@ -114,14 +115,7 @@ namespace BankMore.Transfer.Application.Commands
                   : throw new InvalidOperationException("Falha ao obter ID da conta corrente de origem");
 
             // Persistir transferência
-            var transfer = new Transferencia
-            {
-                IdTransferencia = Guid.NewGuid(),
-                IdContaCorrenteOrigem = command.IdContaOrigem,
-                IdContaCorrenteDestino = destinationAccountId,
-                Valor = command.Valor,
-                DataTransferencia = DateTime.UtcNow
-            };
+            var transfer = new Transferencia(command.IdContaOrigem, destinationAccountId, DateTime.UtcNow, command.Valor);
 
             await _transferenciaRepository.AddAsync(transfer);
 

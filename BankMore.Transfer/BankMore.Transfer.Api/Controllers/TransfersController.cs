@@ -21,6 +21,8 @@ namespace BankMore.Transfer.Api.Controllers
             _mediator = mediator;
         }
 
+        #region POST
+
         /// <summary>
         /// Responsável por efetuar transferências entre contas
         /// </summary>
@@ -63,5 +65,6 @@ namespace BankMore.Transfer.Api.Controllers
 
             }
         }
+        #endregion POST
     }
 }

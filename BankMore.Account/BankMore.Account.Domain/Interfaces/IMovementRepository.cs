@@ -5,5 +5,6 @@ namespace BankMore.Account.Domain.Interfaces
     public interface IMovementRepository
     {
         Task AddAsync(Movimento movimento);
+        Task<Movimento> GetByIdAsync(string id);
     }
 }

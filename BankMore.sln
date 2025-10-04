@@ -47,6 +47,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BankMore.Fee", "BankMore.Fe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5 - Tests", "5 - Tests", "{1BBAEADC-29C3-40E6-893E-988303D69F14}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankMore.Transfer.Tests", "BankMore.Transfer\BankMore.Transfer.Tests\BankMore.Transfer.Tests.csproj", "{324ADD4D-B4FD-48F6-876D-D4591B141EFA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +91,10 @@ Global
 		{A7C06EF8-5087-3FFE-83FA-AF7106559F90}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7C06EF8-5087-3FFE-83FA-AF7106559F90}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A7C06EF8-5087-3FFE-83FA-AF7106559F90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{324ADD4D-B4FD-48F6-876D-D4591B141EFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{324ADD4D-B4FD-48F6-876D-D4591B141EFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{324ADD4D-B4FD-48F6-876D-D4591B141EFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{324ADD4D-B4FD-48F6-876D-D4591B141EFA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -113,6 +119,7 @@ Global
 		{4285016E-8D9B-456B-834D-0484C97F4DBD} = {259D60B7-6C7E-4CF5-B1BE-2F98F10B2DFF}
 		{A7C06EF8-5087-3FFE-83FA-AF7106559F90} = {4285016E-8D9B-456B-834D-0484C97F4DBD}
 		{1BBAEADC-29C3-40E6-893E-988303D69F14} = {259D60B7-6C7E-4CF5-B1BE-2F98F10B2DFF}
+		{324ADD4D-B4FD-48F6-876D-D4591B141EFA} = {1BBAEADC-29C3-40E6-893E-988303D69F14}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5FA408A5-676B-4887-8B37-327C69A123D3}

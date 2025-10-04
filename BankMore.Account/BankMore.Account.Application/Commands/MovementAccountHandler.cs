@@ -27,21 +27,21 @@ namespace BankMore.Account.Application.Commands
 
         public async Task Handle(MovementAccountCommand command, CancellationToken cancellationToken)
         {
-            var movementExists = await _idempotencyRepository.GetByRequestIdAsync(command.RequestId);
+            var movementExists = await _idempotencyRepository.GetByRequestIdAsync(command.IdRequisicao);
 
             if (movementExists != null)
             {
-                throw new IdempotencyViolationException(command.RequestId.ToString("d"));
+                throw new IdempotencyViolationException(command.IdRequisicao.ToString("d"));
             }
 
-            ContaCorrente account = command.AccountNumber != 0
-                ? await _accountRepository.GetByAccountNumberAsync(command.AccountNumber)
-                : await _accountRepository.GetByIdAsync(command.AccountId);
-
-            _httpContextAccessor.HttpContext.Response.Headers.Append("AccountId", account.IdContaCorrente.ToString());
+            ContaCorrente account = command.NumeroConta != 0
+                ? await _accountRepository.GetByAccountNumberAsync(command.NumeroConta)
+                : await _accountRepository.GetByIdAsync(command.IdContaCorrente);
 
             if (account is null)
                 throw new InvalidAccountException("Apenas contas correntes cadastradas podem receber movimentação");
+
+            _httpContextAccessor.HttpContext.Response.Headers.Append("AccountId", account.IdContaCorrente.ToString());
 
             if (!account.Ativo)
                 throw new InactiveAccountException("Apenas contas correntes ativas podem receber movimentação.");
@@ -52,14 +52,14 @@ namespace BankMore.Account.Application.Commands
             if (command.Tipo != "C" && command.Tipo != "D")
                 throw new InvalidTypeException("Apenas os tipos 'débito' e 'crédito' são aceitos.");
 
-            if (command.AccountNumber != 0 && command.AccountId != account.IdContaCorrente.ToString() && command.Tipo == "D")
+            if (command.NumeroConta != 0 && command.IdContaCorrente != account.IdContaCorrente.ToString() && command.Tipo == "D")
                 throw new InvalidTypeException("Apenas 'crédito' é permitido em conta diferente.");
 
             var movement = new Movimento(account.IdContaCorrente, command.Tipo, command.Valor);
 
             await _movementRepository.AddAsync(movement);
 
-            var idempotency = new Idempotencia(command.RequestId, JsonSerializer.Serialize(command), JsonSerializer.Serialize(movement));
+            var idempotency = new Idempotencia(command.IdRequisicao, JsonSerializer.Serialize(command), JsonSerializer.Serialize(movement));
 
             await _idempotencyRepository.AddAsync(idempotency);
 
