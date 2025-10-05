@@ -1,15 +1,52 @@
-
-version: '3.9'
-
 services:
-  account-api:
+  oracle-xe:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: oracle-xe
+    environment:
+      ORACLE_PASSWORD: "bankmore123"
+    ports:
+      - "1521:1521"
+    volumes:
+      - ./init.sql:/container-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "oracle", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  accounts-api:
     build:
       context: .
       dockerfile: BankMore.Account/BankMore.Account.Api/Dockerfile
-    ports:
-      - "5000:8080"
-    volumes:
-      - ./data:/app/data
+    depends_on:
+      oracle-xe:
+        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Data Source=/app/data/account.db
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__OracleConnection=User Id=bankmore;Password=bankmore;Data Source=oracle-xe:1521/XE
+      - Jwt__Key=MinhaChaveSuperSecreta_1234567890!!
+      - Jwt__Issuer=bankmore
+      - Jwt__Audience=bankmore-client
+      - Jwt__Expires=60
+    ports:
+      - "5001:8080"
+
+  transfers-api:
+    build:
+      context: .
+      dockerfile: BankMore.Transfer/BankMore.Transfer.Api/Dockerfile
+    depends_on:
+      oracle-xe:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__OracleConnection=User Id=bankmore;Password=bankmore;Data Source=oracle-xe:1521/XE
+      - AccountAPI__BaseAddress=http://accounts-api:8080/
+      - Jwt__Key=MinhaChaveSuperSecreta_1234567890!!
+      - Jwt__Issuer=bankmore
+      - Jwt__Audience=bankmore-client
+      - Jwt__Expires=60
+    ports:
+      - "5002:8080"

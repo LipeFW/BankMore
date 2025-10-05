@@ -2,9 +2,9 @@
 {
     public class AccountBalanceResponse
     {
-        public int NumeroConta { get; set; }
+        public string NumeroConta { get; set; }
         public string Nome { get; set; } = null!;
-        public DateTime DataConsulta { get; set; }
+        public string DataConsulta { get; set; }
         public string Saldo { get; set; }
     }
 }

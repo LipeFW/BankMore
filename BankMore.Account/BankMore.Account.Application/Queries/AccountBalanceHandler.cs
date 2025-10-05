@@ -28,9 +28,9 @@ namespace BankMore.Account.Application.Queries
 
             return new AccountBalanceResponse
             {
-                NumeroConta = conta.Numero,
+                NumeroConta = conta.Numero.ToString(),
                 Nome = conta.Nome,
-                DataConsulta = DateTime.UtcNow,
+                DataConsulta = DateTime.Now.ToString("G"),
                 Saldo = saldo.ToString("F2")
             };
         }

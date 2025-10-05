@@ -83,7 +83,7 @@ namespace BankMore.Account.Tests.Application.Services
             var jwtToken = handler.ReadJwtToken(token);
 
             // Assert expiration ~60 minutos
-            var diff = jwtToken.ValidTo - DateTime.UtcNow;
+            var diff = jwtToken.ValidTo - DateTime.Now;
             Assert.IsTrue(diff.TotalMinutes <= 60 && diff.TotalMinutes > 59);
         }
     }

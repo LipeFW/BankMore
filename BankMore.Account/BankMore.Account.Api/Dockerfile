@@ -1,30 +1,39 @@
-# Acesse https://aka.ms/customizecontainer para saber como personalizar seu contêiner de depuração e como o Visual Studio usa este Dockerfile para criar suas imagens para uma depuração mais rápida.
-# Esta fase é usada durante a execução no VS no modo rápido (Padrão para a configuração de Depuração)
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+# ==========================
+# 🏗️  Stage 1 - Build
+# ==========================
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copia os arquivos de projeto primeiro para aproveitar cache do Docker
+COPY ["BankMore.Account/BankMore.Account.Api/BankMore.Account.Api.csproj", "BankMore.Account/BankMore.Account.Api/"]
+COPY ["BankMore.Account/BankMore.Account.Application/BankMore.Account.Application.csproj", "BankMore.Account/BankMore.Account.Application/"]
+COPY ["BankMore.Account/BankMore.Account.Domain/BankMore.Account.Domain.csproj", "BankMore.Account/BankMore.Account.Domain/"]
+COPY ["BankMore.Account/BankMore.Account.Infrastructure/BankMore.Account.Infrastructure.csproj", "BankMore.Account/BankMore.Account.Infrastructure/"]
+
+# Restaura dependências (otimiza cache)
+RUN dotnet restore "BankMore.Account/BankMore.Account.Api/BankMore.Account.Api.csproj"
+
+# Copia o restante do código-fonte
+COPY . .
+
+# Compila a aplicação em modo Release
+WORKDIR "/src/BankMore.Account/BankMore.Account.Api"
+RUN dotnet build "BankMore.Account.Api.csproj" -c Release -o /app/build
+
+# ==========================
+# 🚀  Stage 2 - Publish
+# ==========================
+FROM build AS publish
+RUN dotnet publish "BankMore.Account.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# ==========================
+# 🌐  Stage 3 - Runtime
+# ==========================
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
-ENV ASPNETCORE_URLS=http://+:8080;https://+:8081
 
-#ENV ASPNETCORE_URLS=http://+:80
-
-# Esta fase é usada para compilar o projeto de serviço
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["BankMore.Account/BankMore.Account.Api/BankMore.Account.Api.csproj", "BankMore.Account/BankMore.Account.Api/"]
-RUN dotnet restore "./BankMore.Account/BankMore.Account.Api/BankMore.Account.Api.csproj"
-COPY . .
-WORKDIR "/src/BankMore.Account/BankMore.Account.Api"
-RUN dotnet build "./BankMore.Account.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
-
-# Esta fase é usada para publicar o projeto de serviço a ser copiado para a fase final
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./BankMore.Account.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-
-# Esta fase é usada na produção ou quando executada no VS no modo normal (padrão quando não está usando a configuração de Depuração)
-FROM base AS final
-WORKDIR /app
 COPY --from=publish /app/publish .
+
+# EntryPoint
 ENTRYPOINT ["dotnet", "BankMore.Account.Api.dll"]

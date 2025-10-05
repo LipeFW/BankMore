@@ -115,7 +115,7 @@ namespace BankMore.Transfer.Application.Commands
                   : throw new InvalidOperationException("Falha ao obter ID da conta corrente de origem");
 
             // Persistir transferência
-            var transfer = new Transferencia(command.IdContaOrigem, destinationAccountId, DateTime.UtcNow, command.Valor);
+            var transfer = new Transferencia(command.IdContaOrigem, destinationAccountId, DateTime.Now, command.Valor);
 
             await _transferenciaRepository.AddAsync(transfer);
 

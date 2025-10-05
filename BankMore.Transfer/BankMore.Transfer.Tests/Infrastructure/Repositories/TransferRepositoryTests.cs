@@ -58,7 +58,7 @@ namespace BankMore.Transfer.Tests.Infrastructure.Repositories
                 IdContaCorrenteOrigem = Guid.NewGuid(),
                 IdContaCorrenteDestino = Guid.NewGuid(),
                 Valor = 500m,
-                DataTransferencia = DateTime.UtcNow
+                DataTransferencia = DateTime.Now
             };
 
             // Act

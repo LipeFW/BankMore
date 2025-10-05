@@ -19,7 +19,7 @@
         {
             IdMovimento = Guid.NewGuid();
             IdContaCorrente = idContaCorrente;
-            DataMovimento = DateTime.UtcNow;
+            DataMovimento = DateTime.Now;
             TipoMovimento = tipoMovimento;
             Valor = valor;
         }

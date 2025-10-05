@@ -19,15 +19,15 @@ Resumidamente, o projeto consiste em um conjunto de API's para um sistema de ger
 ### **Especificações**
 
  - **Arquitetura:**
-   - Todos os microsserviços adotem os padrões de **DDD** (*Domain-Driven Design*)
-   - A arquitetura de cada serviço adote o Pattern **CQRS** (*Command Query Responsibility Segregation*)
+   - 💹 Todos os microsserviços adotem os padrões de **DDD** (*Domain-Driven Design*)
+   - 💹 A arquitetura de cada serviço adote o Pattern **CQRS** (*Command Query Responsibility Segregation*)
   
  - **Segurança:**
-   - Todas as APIs devem ser protegidas com autenticação via token (**JWT**). Nenhum endpoint pode ser acessado sem um token válido;
-   - Dados sensíveis como CPF ou número da conta não podem transitar entre os microsserviços ou ser armazenados fora do microsserviço de Usuário.
+   - 💹 Todas as APIs devem ser protegidas com autenticação via token (**JWT**). Nenhum endpoint pode ser acessado sem um token válido;
+   - 💹 Dados sensíveis como CPF ou número da conta não podem transitar entre os microsserviços ou ser armazenados fora do microsserviço de Usuário.
 
  - **Qualidade:**
-   - Todas as APIs devem conter um projeto de testes automatizados.
+   - 💹 Todas as APIs devem conter um projeto de testes automatizados. (No total, a solução hoje conta com 62 cenários de teste)
 
  - **Infraestrutura:**
    - O sistema deve ser executado em ambiente de nuvem, com orquestração via Kubernetes.
@@ -43,7 +43,7 @@ Resumidamente, o projeto consiste em um conjunto de API's para um sistema de ger
 
 - **Conta Corrente**
   - Cadastro de conta corrente (*com CPF, Nome e Senha*) - *o número da conta é gerado pela aplicação*.
-  - Login em conta corrente (*com CPF ou Número da Conta e Senha*)
+  - Login em conta corrente (*com CPF ou Número da Conta e Senha*) - *gera um token JWT para autenticação nos demais endpoints protegidos*.
   - Consulta de saldo (*créditos - débitos*).
 
 - **Movimentações**
@@ -68,6 +68,7 @@ Resumidamente, o projeto consiste em um conjunto de API's para um sistema de ger
 - **Entity Framework Core** (para mapeamentos / contexts)  
 - **JWT (Json Web Token)** → autenticação  
 - **Docker** → conteinerização
+- **MSTest / Moq / Sqlite InMemory** → Para testes *automatizados/integração*
 
 ---
 
@@ -78,13 +79,15 @@ BankMore/
 │   ├── BankMore.Account.Api/ Camada de apresentação (Controllers)
 │   ├── BankMore.Account.Application/  Regras de negócio (Handlers, Commands/Queries)
 │   ├── BankMore.Account.Domain/  Entidades e Interfaces
-│   └── BankMore.Account.Infrastructure/  Persistência (Repositories, Migrations, Contexts)
+│   ├── BankMore.Account.Infrastructure/  Persistência (Repositories, Migrations, Contexts)
+│   └── BankMore.Account.Tests/  Testes automatizados (unitários e de integração)
 │
 ├── BankMore.Transfer/
 │   ├── BankMore.Transfer.Api/  Camada de apresentação (Controllers)
 │   ├── BankMore.Transfer.Application/  Regras de negócio (Handlers, Commands/Queries)
 │   ├── BankMore.Transfer.Domain/  Entidades e Interfaces
-│   └── BankMore.Transfer.Infrastructure/  Persistência (Repositories, Migrations, Contexts)
+│   ├── BankMore.Transfer.Infrastructure/  Persistência (Repositories, Migrations, Contexts)
+│   └── BankMore.Transfer.Tests/  Testes automatizados (unitários e de integração)
 │
 └── README.md  
 ```
@@ -183,7 +186,7 @@ git clone https://github.com/LipeFW/BankMore.git
 cd BankMore
 ```
 
-## 🐳 Subindo o Oracle XE com Docker
+## 🐳 Subindo o BD Oracle XE com Docker
 docker run -d --name oracle-xe \
   -p 1521:1521 \
   -e ORACLE_PWD=bankmore123 \
@@ -210,7 +213,7 @@ dotnet test
 Criação de Conta Corrente
 POST /api/accounts/login
 {
-  "cpf": "12345678900", // Precisa ser um CPF válido!.
+  "cpf": "12345678900", // O **CPF** precisa ser válido (*pode ser inserido com ou sem mascara*).
   "senha": "senha123"
 }
 
@@ -220,10 +223,12 @@ Resposta:
   "numeroConta": "12345",
 }
 
+---
+
 Gerar Token
 POST /api/accounts/login
 {
-  "cpfOrAccountNumber": "12345678900", // pode usar o CPF ou o número da conta.
+  "cpfOrAccountNumber": "12345678900", // pode usar o **CPF** (*com ou sem mascara*) ou o **número da conta**.
   "senha": "senha123"
 }
 
@@ -232,6 +237,8 @@ Resposta:
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR..."
 }
+
+---
 
 Transferência
 POST /api/transfer

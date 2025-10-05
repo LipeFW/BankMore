@@ -434,9 +434,9 @@ namespace BankMore.Account.Tests.Api.Controllers
             // Arrange
             var expectedResponse = new AccountBalanceResponse()
             {
-                DataConsulta = DateTime.UtcNow,
+                DataConsulta = DateTime.UtcNow.ToString("G"),
                 Nome = "Felipe Weber",
-                NumeroConta = 1001,
+                NumeroConta = "1001",
                 Saldo = 500.75m.ToString()
             };
 
