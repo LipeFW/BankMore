@@ -201,24 +201,21 @@ cd BankMore
 ## 🐳 Subindo pelo docker-compose
 
 Na pasta raíz do projeto Bankmore rode o comando
-docker run -d --name oracle-xe \
+
 ```bash
 docker compose -f docker-compose.yml up
 ```
-  -p 1521:1521 \
-  -e ORACLE_PWD=bankmore123 \
-  gvenzl/oracle-xe
 
-O docker-compose deve subir as 2 APIs separadamente, o Worker do serviço de tarifação, e as dependências como Oracle, Kafka e o Zookeper.
-**Talvez seja necessário a criação do usuário/scheme BankMore no banco, ou que altere o nome/senha na connection string.
+O docker-compose deve subir as 2 APIs (Account e Transfer) separadamente, o Worker do serviço de tarifação e as dependências como Oracle, Kafka e o Zookeper.
+*Talvez seja necessário a criação do usuário/scheme BankMore no Oracle, ou que precise alterar o nome/senha na connection string.*
 
-A API Account estará disponível em:
+**A API Account estará disponível em:**
 
-http://localhost:5001
+*http://localhost:5001*
 
-A API Transfer estará disponível em:
+**A API Transfer estará disponível em:**
 
-http://localhost:5002
+*http://localhost:5002*
 
 ## 🧪 Testes
 
