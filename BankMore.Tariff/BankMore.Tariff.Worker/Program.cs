@@ -23,14 +23,19 @@ namespace BankMore.Tariff.Worker
 
             SqlMapper.AddTypeHandler<Guid>(new GuidTypeHandler());
 
+            var connectionString = $"User Id={Environment.GetEnvironmentVariable("ORACLE_USER")};" +
+                       $"Password={Environment.GetEnvironmentVariable("ORACLE_PASSWORD")};" +
+                       $"Data Source={Environment.GetEnvironmentVariable("ORACLE_HOST")}:" +
+                       $"{Environment.GetEnvironmentVariable("ORACLE_PORT")}/" +
+                       $"{Environment.GetEnvironmentVariable("ORACLE_SID")}";
+
             builder.Services.AddDbContext<MainContext>(options =>
-                options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection"))
+                options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection") ?? connectionString)
             );
 
             builder.Services.AddScoped<IDbConnection>(sp =>
             {
-                var connectionString = builder.Configuration.GetConnectionString("OracleConnection");
-                var connection = new OracleConnection(connectionString);
+                var connection = new OracleConnection(builder.Configuration.GetConnectionString("OracleConnection") ??connectionString);
                 connection.Open(); // Abre ao criar
                 return connection;
             });
@@ -74,6 +79,12 @@ namespace BankMore.Tariff.Worker
 
             var host = builder.Build();
             host.Run();
+
+            using (var scope = host.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<MainContext>();
+                db.Database.Migrate();
+            }
         }
     }
 }

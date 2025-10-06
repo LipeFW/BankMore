@@ -178,6 +178,12 @@ Toda a documentação dos Endpoints também está disponível pelo **Swagger** (
   - `Valor`
   - `Data`
 
+  - **Tarifa**
+  - `IdTarifa` (PK)
+  - `IdContaCorrente`
+  - `Valor`
+  - `DataTarifacao`
+
 ---
 
 ## 🚀 Executando o Projeto
@@ -192,20 +198,27 @@ git clone https://github.com/LipeFW/BankMore.git
 cd BankMore
 ```
 
-## 🐳 Subindo o BD Oracle XE com Docker
+## 🐳 Subindo pelo docker-compose
+
+Na pasta raíz do projeto Bankmore rode o comando
 docker run -d --name oracle-xe \
+```bash
+docker compose -f docker-compose.yml up
+```
   -p 1521:1521 \
   -e ORACLE_PWD=bankmore123 \
   gvenzl/oracle-xe
 
-## ▶️ Rodando a API
-cd BankMore.Account.Api
-dotnet run
+O docker-compose deve subir as 2 APIs separadamente, o Worker do serviço de tarifação, e as dependências como Oracle, Kafka e o Zookeper.
+**Talvez seja necessário a criação do usuário/scheme BankMore no banco, ou que altere o nome/senha na connection string.
 
+A API Account estará disponível em:
 
-A API estará disponível em:
+http://localhost:5001
 
-http://localhost:5000
+A API Transfer estará disponível em:
+
+http://localhost:5002
 
 ## 🧪 Testes
 

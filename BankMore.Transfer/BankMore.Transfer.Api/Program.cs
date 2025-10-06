@@ -11,6 +11,7 @@ using KafkaFlow.Serializer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Oracle.ManagedDataAccess.Client;
@@ -118,15 +119,19 @@ namespace BankMore.Transfer.Api
 
             SqlMapper.AddTypeHandler<Guid>(new GuidTypeHandler());
 
+            var connectionString = $"User Id={Environment.GetEnvironmentVariable("ORACLE_USER")};" +
+                       $"Password={Environment.GetEnvironmentVariable("ORACLE_PASSWORD")};" +
+                       $"Data Source={Environment.GetEnvironmentVariable("ORACLE_HOST")}:" +
+                       $"{Environment.GetEnvironmentVariable("ORACLE_PORT")}/" +
+                       $"{Environment.GetEnvironmentVariable("ORACLE_SID")}";
 
             builder.Services.AddDbContext<MainContext>(options =>
-                options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection"))
+                options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection") ?? connectionString)
             );
 
             builder.Services.AddScoped<IDbConnection>(sp =>
             {
-                var connectionString = builder.Configuration.GetConnectionString("OracleConnection");
-                var connection = new OracleConnection(connectionString);
+                var connection = new OracleConnection(builder.Configuration.GetConnectionString("OracleConnection") ?? connectionString);
                 connection.Open(); // Abre ao criar
                 return connection;
             });

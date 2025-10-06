@@ -3,10 +3,8 @@ kind: Deployment
 metadata:
   name: transfers-api
   namespace: bankmore
-  labels:
-    app: transfers-api
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: transfers-api
@@ -16,23 +14,44 @@ spec:
         app: transfers-api
     spec:
       containers:
-      - name: bankmore-transfers-api
-        image: bankmore-transfers-api:latest
-        ports:
-        - containerPort: 8080
-        env:
-        - name: ASPNETCORE_URLS
-          value: "http://+:8080"
+        - name: transfers-api
+          image: bankmore-transfers-api:latest
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ASPNETCORE_URLS
+              value: http://+:8080
+            - name: ORACLE_HOST
+              value: oracle-xe      # nome do Service
+            - name: ORACLE_PORT
+              value: "1521"
+            - name: ORACLE_SID
+              value: XE
+            - name: ORACLE_USER
+              value: bankmore
+            - name: ORACLE_PASSWORD
+              value: bankmore123
+            - name: AccountAPI__BaseAddress
+              value: http://accounts-api:8080/
+            - name: Jwt__Key
+              value: MinhaChaveSuperSecreta_1234567890!!
+            - name: Jwt__Issuer
+              value: bankmore
+            - name: Jwt__Audience
+              value: bankmore-client
+            - name: Jwt__Expires
+              value: "60"
+          ports:
+            - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: transfers-service
+  name: transfers-api
   namespace: bankmore
 spec:
-  selector:
-    app: transfers
   ports:
-  - port: 8080
-    targetPort: 8080
-  type: ClusterIP
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: transfers-api
