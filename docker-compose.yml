@@ -16,11 +16,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - ORACLE_HOST=oracle-xe
-      - ORACLE_PORT=1521
-      - ORACLE_SID=XE
-      - ORACLE_USER=bankmore
-      - ORACLE_PASSWORD=bankmore123
+      - ConnectionStrings__OracleConnection=User Id=bankmore;Password=bankmore123;Data Source=172.18.16.1:1521/XE
       - Jwt__Key=MinhaChaveSuperSecreta_1234567890!!
       - Jwt__Issuer=bankmore
       - Jwt__Audience=bankmore-client
@@ -37,11 +33,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - ORACLE_HOST=oracle-xe
-      - ORACLE_PORT=1521
-      - ORACLE_SID=XE
-      - ORACLE_USER=bankmore
-      - ORACLE_PASSWORD=bankmore123
+      - ConnectionStrings__OracleConnection=User Id=bankmore;Password=bankmore123;Data Source=172.18.16.1:1521/XE
       - AccountAPI__BaseAddress=http://accounts-api:8080/
       - Jwt__Key=MinhaChaveSuperSecreta_1234567890!!
       - Jwt__Issuer=bankmore
@@ -83,10 +75,6 @@ services:
       - kafka
       - oracle-xe
     environment:
-      - ORACLE_HOST=oracle-xe
-      - ORACLE_PORT=1521
-      - ORACLE_SID=XE
-      - ORACLE_USER=bankmore
-      - ORACLE_PASSWORD=bankmore123
+      - ConnectionStrings__OracleConnection=User Id=bankmore;Password=bankmore123;Data Source=172.18.16.1:1521/XE
 networks:
   kafka:

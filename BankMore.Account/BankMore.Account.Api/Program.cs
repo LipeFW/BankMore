@@ -76,19 +76,14 @@ namespace BankMore.Account.Api
 
             SqlMapper.AddTypeHandler<Guid>(new GuidTypeHandler());
 
-            var connectionString = $"User Id={Environment.GetEnvironmentVariable("ORACLE_USER")};" +
-                       $"Password={Environment.GetEnvironmentVariable("ORACLE_PASSWORD")};" +
-                       $"Data Source={Environment.GetEnvironmentVariable("ORACLE_HOST")}:" +
-                       $"{Environment.GetEnvironmentVariable("ORACLE_PORT")}/" +
-                       $"{Environment.GetEnvironmentVariable("ORACLE_SID")}";
 
             builder.Services.AddDbContext<MainContext>(options =>
-                options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection") ?? connectionString)
+                options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection"))
             );
 
             builder.Services.AddScoped<IDbConnection>(sp =>
             {
-                var connection = new OracleConnection(builder.Configuration.GetConnectionString("OracleConnection") ?? connectionString);
+                var connection = new OracleConnection(builder.Configuration.GetConnectionString("OracleConnection"));
                 connection.Open();
                 return connection;
             });
