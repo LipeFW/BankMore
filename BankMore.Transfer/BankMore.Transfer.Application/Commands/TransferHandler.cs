@@ -1,4 +1,5 @@
-﻿using BankMore.Transfer.Domain.DTOs.Requests;
+﻿using BankMore.Transfer.Domain.DTOs.Events;
+using BankMore.Transfer.Domain.DTOs.Requests;
 using BankMore.Transfer.Domain.DTOs.Responses;
 using BankMore.Transfer.Domain.Entities;
 using BankMore.Transfer.Domain.Exceptions;
@@ -16,19 +17,22 @@ namespace BankMore.Transfer.Application.Commands
     {
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ITransferRepository _transferenciaRepository;
+        private readonly ITransferRepository _transferRepository;
         private readonly IIdempotencyRepository _idempotencyRepository;
+        private readonly ITransferMessageProducer _transferProducer;
 
         public TransferHandler(IConfiguration configuration,
             IHttpContextAccessor httpContext,
             ITransferRepository transferenciaRepository,
-            IIdempotencyRepository idempotencyRepository
+            IIdempotencyRepository idempotencyRepository,
+            ITransferMessageProducer transferPublisher
 )
         {
             _configuration = configuration;
             _httpContextAccessor = httpContext;
-            _transferenciaRepository = transferenciaRepository;
+            _transferRepository = transferenciaRepository;
             _idempotencyRepository = idempotencyRepository;
+            _transferProducer = transferPublisher;
         }
 
         public async Task Handle(TransferCommand command, CancellationToken cancellationToken)
@@ -117,10 +121,11 @@ namespace BankMore.Transfer.Application.Commands
             // Persistir transferência
             var transfer = new Transferencia(command.IdContaOrigem, destinationAccountId, DateTime.Now, command.Valor);
 
-            await _transferenciaRepository.AddAsync(transfer);
+            await _transferRepository.AddAsync(transfer);
 
             await _idempotencyRepository.AddAsync(new Idempotencia(command.IdRequisicao, JsonSerializer.Serialize(command), JsonSerializer.Serialize(transfer)));
 
+            await _transferProducer.PublishAsync(new TransferMessage(command.IdRequisicao, command.IdContaOrigem, command.Valor));
         }
     }
 }

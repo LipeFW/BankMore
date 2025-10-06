@@ -2,6 +2,7 @@
 using BankMore.Transfer.Domain.Entities;
 using BankMore.Transfer.Domain.Exceptions;
 using BankMore.Transfer.Domain.Interfaces;
+using BankMore.Transfer.Infrastructure.Kafka;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -16,6 +17,7 @@ namespace BankMore.Transfer.Tests.Application.Handlers
         private Mock<IHttpContextAccessor> _httpContextMock;
         private Mock<ITransferRepository> _transferRepositoryMock;
         private Mock<IIdempotencyRepository> _idempotencyRepositoryMock;
+        private Mock<ITransferMessageProducer> _transferPublisherMock;
         private TransferHandler _handler;
 
         [TestInitialize]
@@ -25,6 +27,7 @@ namespace BankMore.Transfer.Tests.Application.Handlers
             _httpContextMock = new Mock<IHttpContextAccessor>();
             _transferRepositoryMock = new Mock<ITransferRepository>();
             _idempotencyRepositoryMock = new Mock<IIdempotencyRepository>();
+            _transferPublisherMock = new Mock<ITransferMessageProducer>();
 
             _configurationMock.Setup(c => c["AccountAPI:BaseAddress"]).Returns("http://localhost");
 
@@ -32,7 +35,8 @@ namespace BankMore.Transfer.Tests.Application.Handlers
                 _configurationMock.Object,
                 _httpContextMock.Object,
                 _transferRepositoryMock.Object,
-                _idempotencyRepositoryMock.Object
+                _idempotencyRepositoryMock.Object,
+                _transferPublisherMock.Object
             );
         }
 

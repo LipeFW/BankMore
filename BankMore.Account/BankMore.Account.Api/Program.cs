@@ -1,12 +1,17 @@
 
 using BankMore.Account.Api.Configuration;
+using BankMore.Account.Api.Handlers;
 using BankMore.Account.Application.Commands;
 using BankMore.Account.Application.Services;
 using BankMore.Account.Domain.Interfaces;
+using BankMore.Account.Domain.Messages;
 using BankMore.Account.Infrastructure.Context;
 using BankMore.Account.Infrastructure.Repositories;
 using BankMore.Account.Infrastructure.Utils;
+using BankMore.Account.Worker;
 using Dapper;
+using KafkaFlow;
+using KafkaFlow.Serializer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -142,6 +147,28 @@ namespace BankMore.Account.Api
             builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddAuthorization();
+
+            builder.Services.AddHostedService<KafkaFlowHostedService>();
+
+            builder.Services.AddKafka(kafka => kafka
+                    .UseConsoleLog()
+                    .AddCluster(cluster => cluster
+                        .WithBrokers(new[] { builder.Configuration["Kafka:Host"] ?? "172.18.16.1:9092" })
+                      // CONSUMER - lê as transferências realizadas
+                      .AddConsumer(consumer => consumer
+                        .Topic("tariffs")
+                        .WithGroupId("tariffs-worker")
+                        .WithBufferSize(100)
+                        .WithWorkersCount(1)
+                        .AddMiddlewares(m => m
+                            .AddSingleTypeDeserializer<JsonCoreDeserializer>(typeof(TariffMessage))
+                            .AddTypedHandlers(h => h
+                                .WithHandlerLifetime(InstanceLifetime.Scoped)
+                                .AddHandler<TariffMessageHandler>())
+                        )
+                    )
+                )
+            );
 
             var app = builder.Build();
 

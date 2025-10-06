@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-BankMore.Tariff.Worker-39f3f64b-f490-422d-85ff-d5b7d1c7a6f1</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="KafkaFlow" Version="4.0.1" />
+    <PackageReference Include="KafkaFlow.LogHandler.Console" Version="4.0.1" />
+    <PackageReference Include="KafkaFlow.Microsoft.DependencyInjection" Version="4.0.1" />
+	  <PackageReference Include="KafkaFlow.Serializer.JsonCore" Version="4.0.1" />
+    <PackageReference Include="MediatR" Version="13.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BankMore.Tariff.Application\BankMore.Tariff.Application.csproj" />
+    <ProjectReference Include="..\BankMore.Tariff.Infrastructure\BankMore.Tariff.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

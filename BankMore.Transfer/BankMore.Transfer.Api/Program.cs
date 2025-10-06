@@ -2,13 +2,15 @@ using BankMore.Transfer.Api.Configuration;
 using BankMore.Transfer.Application.Commands;
 using BankMore.Transfer.Domain.Interfaces;
 using BankMore.Transfer.Infrastructure.Context;
+using BankMore.Transfer.Infrastructure.Kafka;
 using BankMore.Transfer.Infrastructure.Repositories;
 using BankMore.Transfer.Infrastructure.Utils;
 using Dapper;
+using KafkaFlow;
+using KafkaFlow.Serializer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Oracle.ManagedDataAccess.Client;
@@ -131,7 +133,7 @@ namespace BankMore.Transfer.Api
 
             builder.Services.AddSingleton<RestClient>(sp =>
             {
-                return new RestClient(builder.Configuration["AccountAPI:BaseAddress"]);
+                return new RestClient(builder.Configuration["AccountAPI:BaseAddress"] ?? "http://localhost:5001/");
             });
 
             builder.Services.AddScoped<IIdempotencyRepository, IdempotencyRepository>();
@@ -145,6 +147,20 @@ namespace BankMore.Transfer.Api
             builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddAuthorization();
+
+            builder.Services.AddKafka(kafka => kafka
+            .UseConsoleLog()
+                    .AddCluster(cluster => cluster
+                        .WithBrokers(new[] { builder.Configuration["Kafka:Host"] ?? "172.18.16.1:9092" })
+                        .AddProducer("transfer-producer", producer => producer
+                            .DefaultTopic("transfers")
+                        .AddMiddlewares(m => m.AddSerializer<JsonCoreSerializer>())
+                        )
+                    )
+                );
+
+            builder.Services.AddSingleton<ITransferMessageProducer, TransferMessageProducer>();
+
 
             var app = builder.Build();
 

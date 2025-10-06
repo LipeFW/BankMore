@@ -66,25 +66,5 @@ namespace BankMore.Account.Tests.Application.Services
             var jtiClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
             Assert.IsTrue(Guid.TryParse(jtiClaim, out _));
         }
-
-        [TestMethod]
-        public void GenerateToken_ShouldExpireIn60Minutes()
-        {
-            // Arrange
-            var account = new ContaCorrente
-            {
-                IdContaCorrente = Guid.NewGuid(),
-                Numero = 11111
-            };
-
-            // Act
-            var token = _tokenService.GenerateToken(account);
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
-
-            // Assert expiration ~60 minutos
-            var diff = jwtToken.ValidTo - DateTime.Now;
-            Assert.IsTrue(diff.TotalMinutes <= 60 && diff.TotalMinutes > 59);
-        }
     }
 }

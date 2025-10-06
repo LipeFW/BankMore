@@ -22,7 +22,7 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BankMore.Transfer.Domain\BankMore.Transfer.Domain.csproj" />
+    <ProjectReference Include="..\BankMore.Tariff.Domain\BankMore.Tariff.Domain.csproj" />
   </ItemGroup>
 
 </Project>

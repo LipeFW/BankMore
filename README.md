@@ -76,14 +76,20 @@ Resumidamente, o projeto consiste em um conjunto de API's para um sistema de ger
 ```
 BankMore/
 ├── BankMore.Account/
-│   ├── BankMore.Account.Api/ Camada de apresentação (Controllers)
+│   ├── BankMore.Account.Api/ Camada de entrada (Controllers)
 │   ├── BankMore.Account.Application/  Regras de negócio (Handlers, Commands/Queries)
 │   ├── BankMore.Account.Domain/  Entidades e Interfaces
 │   ├── BankMore.Account.Infrastructure/  Persistência (Repositories, Migrations, Contexts)
 │   └── BankMore.Account.Tests/  Testes automatizados (unitários e de integração)
 │
+├── BankMore.Tariff/
+│   ├── BankMore.Tariff.Application/  Regras de negócio (Handlers, Commands/Queries)
+│   ├── BankMore.Tariff.Domain/  Entidades e Interfaces
+│   ├── BankMore.Tariff.Infrastructure/  Persistência (Repositories, Migrations, Contexts)
+│   └── BankMore.Tariff.Worker/  Camada de entrada (Consumers)
+│
 ├── BankMore.Transfer/
-│   ├── BankMore.Transfer.Api/  Camada de apresentação (Controllers)
+│   ├── BankMore.Transfer.Api/  Camada de entrada (Controllers)
 │   ├── BankMore.Transfer.Application/  Regras de negócio (Handlers, Commands/Queries)
 │   ├── BankMore.Transfer.Domain/  Entidades e Interfaces
 │   ├── BankMore.Transfer.Infrastructure/  Persistência (Repositories, Migrations, Contexts)

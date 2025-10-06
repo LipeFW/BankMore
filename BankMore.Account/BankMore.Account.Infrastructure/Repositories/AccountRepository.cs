@@ -41,13 +41,22 @@ namespace BankMore.Account.Infrastructure.Repositories
             await _db.ExecuteAsync(sql, parameters);
         }
 
-        public async Task<ContaCorrente> GetByIdAsync(string id)
+        public async Task<ContaCorrente> GetByIdAsync(Guid idContaCorrente)
         {
             var sql = @"SELECT ""IdContaCorrente"", ""Cpf"", ""Nome"", ""Senha"", ""Numero"", ""Ativo""
                         FROM ContaCorrente
-                        WHERE ""IdContaCorrente"" = :id";
+                        WHERE ""IdContaCorrente"" = :idContaCorrente";
 
-            return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { id });
+            return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { idContaCorrente = idContaCorrente.ToString("d") });
+        }
+
+        public async Task<ContaCorrente> GetByIdAsync(string idContaCorrente)
+        {
+            var sql = @"SELECT ""IdContaCorrente"", ""Cpf"", ""Nome"", ""Senha"", ""Numero"", ""Ativo""
+                        FROM ContaCorrente
+                        WHERE ""IdContaCorrente"" = :idContaCorrente";
+
+            return await _db.QuerySingleOrDefaultAsync<ContaCorrente>(sql, new { idContaCorrente });
         }
 
         public async Task<ContaCorrente> GetByAccountNumberAsync(int accountNumber)

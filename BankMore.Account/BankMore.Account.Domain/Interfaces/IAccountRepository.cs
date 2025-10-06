@@ -6,7 +6,8 @@ namespace BankMore.Account.Domain.Interfaces
     {
         Task AddAsync(ContaCorrente account);
         Task<ContaCorrente> GetByCpfAsync(string cpf);
-        Task<ContaCorrente> GetByIdAsync(string id);
+        Task<ContaCorrente> GetByIdAsync(Guid idContaCorrente);
+        Task<ContaCorrente> GetByIdAsync(string idContaCorrente);
         Task<ContaCorrente> GetByAccountNumberAsync(int accountNumber);
         Task<decimal> GetSaldoAsync(string idContaCorrente);
         Task UpdateAtivoAsync(ContaCorrente account);

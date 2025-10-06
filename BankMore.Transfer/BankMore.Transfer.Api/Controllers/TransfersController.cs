@@ -64,6 +64,11 @@ namespace BankMore.Transfer.Api.Controllers
                 return BadRequest(new ErrorResponse(ex.Message, "INVALID_OPERATION"));
 
             }
+            catch (IdempotencyViolationException ex)
+            {
+                return BadRequest(new ErrorResponse(ex.Message, "IDEMPOTENCY_VIOLATION"));
+
+            }
         }
         #endregion POST
     }
